@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Workflow Cost Estimator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Smooth transition for active row states */
+        .wbs-row { transition: all 0.2s ease-in-out; }
+        .wbs-row.active { border-color: #93c5fd; background-color: #f0fdf4; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .wbs-row.inactive { opacity: 0.6; background-color: #f8fafc; }
+        /* Hide number input arrows for clean UI */
+        input[type=number].clean-number::-webkit-inner-spin-button, 
+        input[type=number].clean-number::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number].clean-number { -moz-appearance: textfield; }
+        /* Custom slider styles */
+        .impact-handle {
+            touch-action: none; /* Prevent scrolling while dragging on mobile */
+        }
+        .impact-handle:hover, .impact-handle:active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            z-index: 20;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900 font-sans p-4 md:p-8">
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 flex items-center justify-center">
+                        <i class="fa-solid fa-calculator text-white text-xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold tracking-tight text-slate-900">
+                        Agentic Workflow Cost Estimator
+                    </h1>
+                </div>
+                
+                <!-- Currency Selector with Forex Rates -->
+                <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm ml-14 md:ml-0 self-start md:self-auto">
+                    <i class="fa-solid fa-coins text-slate-400"></i>
+                    <select id="currencySelect" class="bg-transparent border-none text-sm font-semibold text-slate-700 focus:ring-0 cursor-pointer outline-none">
+                        <option value="USD" data-symbol="$" data-rate="1">USD ($)</option>
+                        <option value="EUR" data-symbol="€" data-rate="0.92">EUR (€)</option>
+                        <option value="GBP" data-symbol="£" data-rate="0.79">GBP (£)</option>
+                        <option value="JPY" data-symbol="¥" data-rate="155">JPY (¥)</option>
+                        <option value="INR" data-symbol="₹" data-rate="83.5">INR (₹)</option>
+                        <option value="BRL" data-symbol="R$" data-rate="5.00">BRL (R$)</option>
+                        <option value="SGD" data-symbol="S$" data-rate="1.35">SGD (S$)</option>
+                        <option value="MYR" data-symbol="RM" data-rate="4.70">MYR (RM)</option>
+                        <option value="CNY" data-symbol="¥" data-rate="7.20">CNY (¥)</option>
+                    </select>
+                </div>
+            </div>
+            <p class="text-slate-500 text-lg ml-14 max-w-3xl">
+                Build a custom Work Breakdown Structure (WBS) for your next sprint or project. Select tasks, tune models per operation, and estimate aggregate token costs.
+            </p>
+        </header>
+
+        <!-- TAB NAVIGATION -->
+        <div class="flex space-x-2 border-b border-slate-300 mb-6">
+            <button id="tabCalcBtn" class="px-5 py-3 border-b-2 border-blue-600 text-blue-600 font-semibold transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-list-check"></i> WBS Estimator
+            </button>
+            <button id="tabHelpBtn" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-semibold transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-circle-question"></i> Help & Methodology
+            </button>
+            <button id="tabDataBtn" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-semibold transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-database"></i> Reference Data
+            </button>
+        </div>
+
+        <!-- CALCULATOR VIEW -->
+        <div id="viewCalc" class="space-y-6">
+            
+            <!-- 1. Repository Metrics (Greenfield vs Brownfield) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center mb-6">
+                    <div class="flex items-center gap-3 w-full lg:w-1/3">
+                        <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-database text-xl"></i></div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800">Project Context</h2>
+                            <p class="text-xs text-slate-500">Define the baseline footprint strategy</p>
+                        </div>
+                    </div>
+
+                    <div class="w-full lg:w-1/3 flex gap-4 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer bg-white py-2 px-3 rounded-lg shadow-sm border border-slate-200 transition-all">
+                            <input type="radio" name="projectType" value="brownfield" id="typeBrownfield" checked class="text-blue-600 focus:ring-blue-500">
+                            <span class="font-bold text-sm text-slate-700">Brownfield</span>
+                        </label>
+                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer py-2 px-3 rounded-lg border border-transparent hover:bg-slate-200 transition-all">
+                            <input type="radio" name="projectType" value="greenfield" id="typeGreenfield" class="text-blue-600 focus:ring-blue-500">
+                            <span class="font-bold text-sm text-slate-700">Greenfield</span>
+                        </label>
+                    </div>
+
+                    <div class="w-full lg:w-1/3">
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Primary Language</label>
+                        <div class="relative">
+                            <i class="fa-regular fa-file-code absolute left-3 top-3 text-slate-400"></i>
+                            <select id="langSelect" class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="frictionContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6 transition-all duration-300">
+                    <div class="col-span-1 md:col-span-2">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-sm font-medium text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-code-branch text-slate-400"></i> Codebase Friction / Complexity
+                            </label>
+                            <span class="text-sm font-bold text-slate-700" id="frictionDisplay">Standard (1.0x)</span>
+                        </div>
+                        <input type="range" id="frictionInput" min="0.5" max="2.5" step="0.1" value="1.0" class="w-full accent-slate-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" />
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                            <span>Clean/Decoupled (0.5x Turns)</span>
+                            <span>Spaghetti/Legacy Monolith (2.5x Turns)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Context Dynamic Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50/50 p-5 rounded-xl border border-blue-100">
+                    
+                    <!-- Brownfield Inputs -->
+                    <div id="brownfieldInputs" class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Legacy Lines of Code (Existing Repo)</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-code absolute left-3 top-3 text-slate-400"></i>
+                                <input type="number" id="locInput" value="50000" class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" min="1" max="10000000"/>
+                            </div>
+                            <p class="text-[10px] text-slate-500 mt-1">Base size of the repository before this sprint.</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2 flex justify-between items-end">
+                                <span>Code Impact Distribution</span>
+                                <span class="text-[10px] text-slate-500 font-normal">Drag handles to adjust percentages</span>
+                            </label>
+                            
+                            <!-- INTERACTIVE SLIDER -->
+                            <div class="relative h-8 bg-slate-200 rounded-lg select-none mb-5" id="impactSliderTrack">
+                                <!-- Segments -->
+                                <div id="segmentNew" class="absolute h-full bg-blue-500 rounded-l-lg flex items-center justify-center text-white text-xs font-bold shadow-inner" style="width: 50%; left: 0;"></div>
+                                <div id="segmentUpdate" class="absolute h-full bg-amber-400 flex items-center justify-center text-amber-900 text-xs font-bold shadow-inner" style="width: 30%; left: 50%;"></div>
+                                <div id="segmentDelete" class="absolute h-full bg-red-500 rounded-r-lg flex items-center justify-center text-white text-xs font-bold shadow-inner" style="width: 20%; left: 80%;"></div>
+                                
+                                <!-- Handles -->
+                                <div id="handle1" class="impact-handle absolute h-12 w-5 bg-white border-2 border-slate-400 rounded cursor-ew-resize top-1/2 -translate-y-1/2 -ml-2.5 z-10 shadow-md flex items-center justify-center transition-shadow" style="left: 50%;">
+                                    <div class="w-0.5 h-4 bg-slate-300 rounded"></div>
+                                </div>
+                                <div id="handle2" class="impact-handle absolute h-12 w-5 bg-white border-2 border-slate-400 rounded cursor-ew-resize top-1/2 -translate-y-1/2 -ml-2.5 z-10 shadow-md flex items-center justify-center transition-shadow" style="left: 80%;">
+                                    <div class="w-0.5 h-4 bg-slate-300 rounded"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex-1 text-center bg-blue-50 border border-blue-200 rounded-lg p-1.5 transition-colors focus-within:border-blue-500">
+                                    <div class="text-[10px] uppercase font-bold text-blue-600 mb-0.5">New (+)</div>
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        <input type="number" id="pctNew" value="50" class="clean-number w-10 text-center text-sm font-bold bg-transparent border-b border-transparent focus:border-blue-400 outline-none">
+                                        <span class="text-[10px] text-blue-500">%</span>
+                                    </div>
+                                </div>
+                                <div class="flex-1 text-center bg-amber-50 border border-amber-200 rounded-lg p-1.5 transition-colors focus-within:border-amber-500">
+                                    <div class="text-[10px] uppercase font-bold text-amber-600 mb-0.5">Update (~)</div>
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        <input type="number" id="pctUpdate" value="30" class="clean-number w-10 text-center text-sm font-bold bg-transparent border-b border-transparent focus:border-amber-400 outline-none">
+                                        <span class="text-[10px] text-amber-500">%</span>
+                                    </div>
+                                </div>
+                                <div class="flex-1 text-center bg-red-50 border border-red-200 rounded-lg p-1.5 transition-colors focus-within:border-red-500">
+                                    <div class="text-[10px] uppercase font-bold text-red-600 mb-0.5">Delete (-)</div>
+                                    <div class="flex items-center justify-center gap-0.5">
+                                        <input type="number" id="pctDelete" value="20" class="clean-number w-10 text-center text-sm font-bold bg-transparent border-b border-transparent focus:border-red-400 outline-none">
+                                        <span class="text-[10px] text-red-500">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Greenfield Inputs -->
+                    <div id="greenfieldInputs" class="col-span-1 md:col-span-2 hidden">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-emerald-100 text-emerald-700 p-3 rounded-xl border border-emerald-200">
+                                <i class="fa-solid fa-seedling text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800">Greenfield Mode Active</h3>
+                                <p class="text-sm text-slate-600">The total codebase size is currently starting at 0. Agentic friction has been reset to standard (1.0x). As you select Feature Implementation tasks below, the projected repository size will grow dynamically.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Computed Total LOC Info -->
+                    <div class="col-span-1 md:col-span-2 pt-4 border-t border-slate-200/60 flex justify-between items-center">
+                        <span class="text-sm font-semibold text-slate-600">Projected Total Repo Size (Used for Repo-Wide Tasks):</span>
+                        <span class="text-xl font-black text-slate-800 px-3 py-1 bg-white rounded-lg shadow-sm border border-slate-200" id="projectedTotalLoc">50,000 LOC</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 2. Work Breakdown Structure (WBS) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-purple-500"></i> Task Selection (WBS)
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">Check tasks to include. Configure quantity (for features & PRs) and optimize the model per task.</p>
+                    </div>
+                </div>
+
+                <!-- Table Header -->
+                <div class="hidden lg:grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase tracking-wider px-6 py-3 bg-slate-100 border-b border-slate-200">
+                    <div class="col-span-1 text-center">Include</div>
+                    <div class="col-span-4">Agentic Operation</div>
+                    <div class="col-span-2 text-center">Scope / Quantity</div>
+                    <div class="col-span-3">Model Selection & Cache</div>
+                    <div class="col-span-2 text-right">Task Cost</div>
+                </div>
+
+                <!-- WBS Rows Container -->
+                <div id="wbsContainer" class="divide-y divide-slate-100 p-2 space-y-2 lg:space-y-0 lg:p-0">
+                    <!-- Rows injected by JS -->
+                </div>
+            </div>
+
+            <!-- 3. Global Aggregation Dashboard -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
+                
+                <!-- Primary Cost Display -->
+                <div class="lg:col-span-5 bg-slate-900 rounded-3xl shadow-xl overflow-hidden relative">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+                    <div class="p-8">
+                        <h3 class="text-slate-400 font-medium tracking-wide uppercase text-sm mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-dollar-to-slot"></i> Global Sprint Estimate
+                        </h3>
+                        <!-- Notice: Cents removed here, digits rounded -->
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-5xl md:text-6xl font-black text-white tracking-tighter" id="totalCostDollars">$0</span>
+                        </div>
+                        <div class="text-slate-400 text-sm font-medium mb-6">
+                            Estimated Range: <span class="text-emerald-400" id="costRangeLow">$0</span> - <span class="text-red-400" id="costRangeHigh">$0</span>
+                        </div>
+                        <div class="pt-6 border-t border-slate-800">
+                            <p class="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Total Gross Tokens Analyzed</p>
+                            <p class="text-2xl font-semibold text-slate-100" id="grossTokensDisplay">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Token Flow -->
+                <div class="lg:col-span-7 bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+                    <h3 class="text-lg font-bold flex items-center gap-2 mb-6 text-slate-800">
+                        <i class="fa-solid fa-network-wired text-indigo-500"></i> Overall Token Expenditure
+                    </h3>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full h-4 rounded-full flex overflow-hidden mb-6 bg-slate-100">
+                        <div id="barNew" class="bg-slate-400 transition-all duration-500" title="New Input"></div>
+                        <div id="barCached" class="bg-emerald-400 transition-all duration-500" title="Cached Input"></div>
+                        <div id="barOutput" class="bg-blue-500 transition-all duration-500" title="Output"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-3 h-3 rounded-full bg-slate-400"></div>
+                                <span class="text-sm font-semibold text-slate-600">New Input</span>
+                            </div>
+                            <div class="text-xl font-bold text-slate-800" id="newInputTokens">0</div>
+                            <div class="text-sm text-slate-500 mt-1" id="newInputCost">$0</div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                                <span class="text-sm font-semibold text-emerald-800">Cached Input</span>
+                            </div>
+                            <div class="text-xl font-bold text-emerald-900" id="cachedTokens">0</div>
+                            <div class="text-sm text-emerald-600 mt-1" id="cachedCost">$0</div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                                <span class="text-sm font-semibold text-blue-800">Output Generated</span>
+                            </div>
+                            <div class="text-xl font-bold text-blue-900" id="outputTokens">0</div>
+                            <div class="text-sm text-blue-600 mt-1" id="outputCost">$0</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div> <!-- End viewCalc -->
+
+        <!-- HELP VIEW -->
+        <div id="viewHelp" style="display: none;" class="space-y-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-blue-600"></i> Understanding the Estimation Methodology
+                </h2>
+                
+                <div class="prose max-w-none text-slate-600 space-y-6">
+                    <p>
+                        The Agentic Workflow Cost Estimator calculates the financial impact of deploying autonomous coding agents. Unlike simple chat interfaces, agentic workflows involve continuous loops of reading code, writing tests, debugging, and generating features. The footprint of these loops varies dramatically based on your project context and the specific tasks selected.
+                    </p>
+
+                    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2 mt-8">1. Project Context: Greenfield vs. Brownfield</h3>
+                    <p>The total size of your codebase dictates how many tokens are required for comprehensive tasks (like Architecture Scaffolding or Quality Audits).</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-xl">
+                            <h4 class="font-bold text-emerald-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-seedling"></i> Greenfield (New Projects)</h4>
+                            <p class="text-sm">Starts with <strong>0 Base LOC</strong>. The projected repository size is calculated purely dynamically by summing up the sizes of the <em>Feature Implementation</em> tasks you select in the WBS. Repo-wide tasks are evaluated against this newly generated footprint.</p>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-100 p-5 rounded-xl">
+                            <h4 class="font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-industry"></i> Brownfield (Existing Projects)</h4>
+                            <p class="text-sm">Starts with a <strong>Legacy LOC</strong> provided by you. As you add features, we calculate the newly generated LOC. You specify an interactive <strong>Code Impact Distribution</strong> (New / Update / Delete) using the slider. New code grows the repo size. Updates leave it unchanged. Deletions actively reduce the total repo size.</p>
+                            <code class="block bg-slate-800 text-green-400 p-2 mt-3 rounded text-[10px]">Proj. LOC = Legacy LOC + (FeatureLOC * %New) - (FeatureLOC * %Delete)</code>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2 mt-8">2. Scoped Evaluation Mechanics</h3>
+                    <p>Tasks are evaluated differently depending on their semantic scope. Agents do not read a massive 10M LOC repository to write a small 200 LOC feature, but they <em>do</em> read the entire repository when executing a massive Migration task.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                            <h4 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                <span class="bg-purple-100 text-purple-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-black">A</span>
+                                Feature Tasks (Scoped Context)
+                            </h4>
+                            <p class="text-sm mb-3">
+                                Feature Implementation tasks are evaluated strictly on their individual LOC size and quantity, ignoring the total repo size. Standard scope sizes:
+                            </p>
+                            <ul class="text-xs space-y-1 list-disc pl-4 marker:text-purple-500">
+                                <li><strong>Small Feature:</strong> 250 LOC scope</li>
+                                <li><strong>Medium Feature:</strong> 1,000 LOC scope</li>
+                                <li><strong>Large Feature:</strong> 5,000 LOC scope</li>
+                                <li><strong>XL Epic:</strong> 15,000 LOC scope</li>
+                                <li><strong>PR Review:</strong> 500 LOC diff scope per PR</li>
+                            </ul>
+                            <code class="block bg-slate-800 text-green-400 p-2 mt-3 rounded text-[10px]">Base Tokens = FeatureScopeLOC * Density</code>
+                        </div>
+
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                            <h4 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-black">B</span>
+                                Repo Tasks (Global Context)
+                            </h4>
+                            <p class="text-sm">
+                                Tasks like Quality Audits, Legacy Migrations, and Sprint Planning require sweeping the entire codebase. These tasks derive their baseline footprint from the <strong>Projected Total Repo Size</strong> calculated in Step 1.
+                            </p>
+                            <code class="block bg-slate-800 text-green-400 p-2 mt-3 rounded text-[10px]">Base Tokens = TotalRepoLOC * Density</code>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2 mt-8">3. Friction & Discovery Tokens</h3>
+                    <p>Agentic coding isn't linear. An agent doesn't read the <em>entire</em> context on every turn. The estimator applies a <strong>Friction Factor</strong> (based on codebase complexity) to adjust the total turns. It also assumes 25% of the total agent turns are spent "discovering" (reading the full context), while the remaining 75% are "working" turns reading only a fraction (15%) of the context.</p>
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100 mt-4 font-mono text-sm space-y-2 text-slate-700 overflow-x-auto">
+                        <div><span class="font-bold text-blue-600">Adj. Multiplier (Turns)</span> = Base Multiplier × Friction Factor</div>
+                        <div><span class="font-bold text-slate-500">Discovery Tokens</span> = Base Tokens × (Adj. Multiplier × 0.25)</div>
+                        <div><span class="font-bold text-emerald-600">Working Tokens</span> = (Base Tokens × 0.15) × (Adj. Multiplier × 0.75)</div>
+                        <div class="border-t border-slate-200 pt-2 mt-2 font-bold">Gross Tokens = Discovery Tokens + Working Tokens</div>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2 mt-8">4. Token Flow & Caching Distribution</h3>
+                    <p>Once the Gross Tokens are calculated for a task, they are distributed into three distinct buckets based on the task's output profile and the prompt cache hit rate. Agentic loops rely heavily on reading the same context repeatedly, leading to high cache rates.</p>
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100 mt-4 font-mono text-sm space-y-2 text-slate-700">
+                        <div><span class="font-bold text-blue-600">Output Tokens</span> = Gross Tokens × Task Output Profile %</div>
+                        <div><span class="font-bold text-slate-500">Total Input Tokens</span> = Gross Tokens - Output Tokens</div>
+                        <div class="pl-4 border-l-2 border-slate-200 ml-2 mt-2 space-y-2">
+                            <div><span class="font-bold text-emerald-600">Cached Input Tokens</span> = Total Input Tokens × Cache Read Rate %</div>
+                            <div><span class="font-bold text-slate-600">New Input Tokens</span> = Total Input Tokens - Cached Input Tokens</div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2 mt-8">5. Final Financial Cost Calculation</h3>
+                    <p>Finally, the application applies the specific pricing tier of the selected LLM. Because model pricing is quoted per 1 Million (1M) tokens, the tokens are divided accordingly and multiplied by their respective input, cached, and output rates.</p>
+                    <div class="bg-slate-900 text-green-400 p-5 rounded-xl mt-4 font-mono text-xs sm:text-sm space-y-3 overflow-x-auto shadow-inner">
+                        <div>Cost<sub>New Input</sub> = (New Input Tokens / 1,000,000) × Model Input Price</div>
+                        <div>Cost<sub>Cached</sub> = (Cached Input Tokens / 1,000,000) × Model Cached Price</div>
+                        <div>Cost<sub>Output</sub> = (Output Tokens / 1,000,000) × Model Output Price</div>
+                        <div class="border-t border-slate-700 pt-3 mt-3 text-white font-bold text-sm">
+                            Base Cost = Cost<sub>New Input</sub> + Cost<sub>Cached</sub> + Cost<sub>Output</sub>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mt-8 rounded-r-lg">
+                        <h4 class="font-bold text-blue-900 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line"></i> Stochastic Range Estimation
+                        </h4>
+                        <p class="text-sm text-blue-800 mt-1">
+                            Because LLM behavior is inherently unpredictable, the final display provides a probabilistic range based on the Base Cost. We estimate a low-end (happy path, fewer turns, high caching) at -20%, and a high-end (hallucination loops, cache eviction) at +45%.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- DATA VIEW (Reference Parameters) -->
+        <div id="viewData" style="display: none;" class="space-y-10">
+            <!-- Models Section -->
+            <section>
+                <div class="mb-4 border-b border-slate-200 pb-2">
+                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-emerald-500"></i> Execution Models
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1">Detailed tiering and pricing (per 1M tokens) for the available models.</p>
+                </div>
+                <div id="dataModelsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </section>
+
+            <!-- Tasks Section -->
+            <section>
+                <div class="mb-4 border-b border-slate-200 pb-2">
+                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-robot text-purple-500"></i> Agentic Workflows
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1">Expansion multipliers, caching ratios, and compatible capability tiers for SDLC tasks.</p>
+                </div>
+                <div id="dataTasksGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+            </section>
+
+            <!-- Languages Section -->
+            <section>
+                <div class="mb-4 border-b border-slate-200 pb-2">
+                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-regular fa-file-code text-blue-500"></i> Codebase Token Density
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1">Average tokens generated per 100 lines of code across various programming languages.</p>
+                </div>
+                <div id="dataLangGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-10"></div>
+            </section>
+        </div>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- DATA DICTIONARIES ---
+        const LANGUAGES = [
+            { id: 'js', name: "JavaScript", density: 7.0 },
+            { id: 'ts', name: "TypeScript / JSX", density: 9.0 },
+            { id: 'py', name: "Python / Godot", density: 10.0 },
+            { id: 'sh', name: "Shell / Scripting", density: 11.5 },
+            { id: 'go', name: "Go / Swift / PHP", density: 11.25 },
+            { id: 'st', name: "Industrial / ST", density: 11.5 },
+            { id: 'sql', name: "SQL / Data", density: 11.5 },
+            { id: 'rs', name: "Rust", density: 12.5 },
+            { id: 'java', name: "Java / C# / Apex", density: 13.25 },
+            { id: 'c', name: "C / C++ / Obj-C", density: 14.25 },
+            { id: 'yaml', name: "YAML / Terraform", density: 11.0 },
+            { id: 'md', name: "Documentation", density: 9.0 },
+            { id: 'json', name: "JSON / Config", density: 15.0 },
+            { id: 'xml', name: "XML / Markup", density: 18.0 },
+        ].sort((a, b) => a.name.localeCompare(b.name));
+
+        const TASKS = [
+            {
+                id: 'sprint_planning', name: "Sprint Planning & Forecasting", multiplier: 20.0,
+                profile: { output: 0.08, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
+                description: "Analyzing backlog against repository history to estimate effort.",
+                allowedTiers: ['Powerful']
+            },
+            {
+                id: 'arch_design', name: "Architecture & Scaffolding", multiplier: 15.0,
+                profile: { output: 0.05, cachedRatio: 0.90 }, hasQuantity: false, scope: 'repo',
+                description: "Translating PRDs into system architecture and boilerplate code.",
+                allowedTiers: ['Powerful']
+            },
+            {
+                id: 'challenge_specs', name: "Challenge Specs vs Codebase", multiplier: 12.0,
+                profile: { output: 0.05, cachedRatio: 0.95 }, hasQuantity: false, scope: 'repo',
+                description: "Cross-referencing PRDs against the current state of the codebase.",
+                allowedTiers: ['Versatile', 'Powerful']
+            },
+            {
+                id: 'feature_dev_s', name: "Feature Implementation (Small)", multiplier: 10.0,
+                profile: { output: 0.10, cachedRatio: 0.85 }, hasQuantity: true, unit: "Features",
+                scope: 'feature', baseLoc: 250,
+                description: "Minor tweaks or single CRUD endpoints (Scope: ~250 LOC / feature).",
+                allowedTiers: ['Lightweight', 'Versatile']
+            },
+            {
+                id: 'feature_dev_m', name: "Feature Implementation (Medium)", multiplier: 25.0,
+                profile: { output: 0.15, cachedRatio: 0.75 }, hasQuantity: true, unit: "Features",
+                scope: 'feature', baseLoc: 1000,
+                description: "Standard end-to-end feature coding (Scope: ~1,000 LOC / feature).",
+                allowedTiers: ['Versatile']
+            },
+            {
+                id: 'feature_dev_l', name: "Feature Implementation (Large)", multiplier: 50.0,
+                profile: { output: 0.20, cachedRatio: 0.65 }, hasQuantity: true, unit: "Features",
+                scope: 'feature', baseLoc: 5000,
+                description: "Multi-component cross-file reasoning (Scope: ~5,000 LOC / feature).",
+                allowedTiers: ['Versatile', 'Powerful']
+            },
+            {
+                id: 'feature_dev_xl', name: "Feature Implementation (Extra Large)", multiplier: 100.0,
+                profile: { output: 0.25, cachedRatio: 0.55 }, hasQuantity: true, unit: "Features",
+                scope: 'feature', baseLoc: 15000,
+                description: "Epic-level systemic features or core changes (Scope: ~15k LOC / epic).",
+                allowedTiers: ['Powerful']
+            },
+            {
+                id: 'pr_review', name: "Automated PR Review", multiplier: 8.0,
+                profile: { output: 0.05, cachedRatio: 0.95 }, hasQuantity: true, unit: "PRs",
+                scope: 'feature', baseLoc: 500,
+                description: "Deep codebase context analysis for diffs (Scope: ~500 LOC diff / PR).",
+                allowedTiers: ['Lightweight', 'Versatile']
+            },
+            {
+                id: 'security_audit', name: "Security Vulnerability Audit", multiplier: 45.0,
+                profile: { output: 0.02, cachedRatio: 0.90 }, hasQuantity: false, scope: 'repo',
+                description: "Tracing data flow paths across the repository to find exploits.",
+                allowedTiers: ['Powerful'],
+                onlyBrownfield: true
+            },
+            {
+                id: 'refactor_migration', name: "Legacy Codebase Migration", multiplier: 85.0,
+                profile: { output: 0.40, cachedRatio: 0.60 }, hasQuantity: false, scope: 'repo',
+                description: "Massive rewrites (e.g., JS to TS) with continuous test verification.",
+                allowedTiers: ['Powerful', 'Versatile'],
+                onlyBrownfield: true
+            },
+            {
+                id: 'tech_debt_mgmt', name: "Technical Debt Management", multiplier: 30.0,
+                profile: { output: 0.15, cachedRatio: 0.80 }, hasQuantity: false, scope: 'repo',
+                description: "Identifying, analyzing, and refactoring technical debt across the existing codebase.",
+                allowedTiers: ['Versatile', 'Powerful'],
+                onlyBrownfield: true
+            },
+            {
+                id: 'dependency_upgrade', name: "Dependency / Framework Upgrade", multiplier: 22.0,
+                profile: { output: 0.10, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
+                description: "Sweeping codebase to fix breaking changes caused by major framework version bumps.",
+                allowedTiers: ['Versatile', 'Powerful'],
+                onlyBrownfield: true
+            },
+            {
+                id: 'docs', name: "Documentation Sweep", multiplier: 4.2, 
+                profile: { output: 0.10, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
+                description: "Repository-wide synchronization, Wiki/README generation.",
+                allowedTiers: ['Lightweight']
+            },
+            {
+                id: 'quality', name: "Quality Assurance Audit", multiplier: 10.8,
+                profile: { output: 0.02, cachedRatio: 0.90 }, hasQuantity: false, scope: 'repo',
+                description: "Continuous syntax verification & architectural consistency checks.",
+                allowedTiers: ['Lightweight', 'Versatile']
+            },
+            {
+                id: 'test_standard', name: "Synthetic Test Gen (Standard)", multiplier: 70.0,
+                profile: { output: 0.25, cachedRatio: 0.80 }, hasQuantity: false, scope: 'repo',
+                description: "Generates tests to meet 1:1 ratio for web/backend systems.",
+                allowedTiers: ['Versatile']
+            },
+            {
+                id: 'test_industrial', name: "Synthetic Test Gen (Industrial/IoT)", multiplier: 120.0,
+                profile: { output: 0.20, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
+                description: "Strict safety compliance (MISRA C) & HIL mocking.",
+                allowedTiers: ['Powerful']
+            }
+        ];
+
+        const MODELS = [
+            { id: 'claude-haiku-4.5', name: "Claude Haiku 4.5", input: 1.00, cached: 0.10, output: 5.00, tier: "Versatile" },
+            { id: 'claude-opus-4.5', name: "Claude Opus 4.5", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful" },
+            { id: 'claude-opus-4.6', name: "Claude Opus 4.6", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful" },
+            { id: 'claude-opus-4.7', name: "Claude Opus 4.7", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful" },
+            { id: 'claude-sonnet-4.5', name: "Claude Sonnet 4.5", input: 3.00, cached: 0.30, output: 15.00, tier: "Versatile" },
+            { id: 'claude-sonnet-4.6', name: "Claude Sonnet 4.6", input: 3.00, cached: 0.30, output: 15.00, tier: "Versatile" },
+            { id: 'gemini-2.5-pro', name: "Gemini 2.5 Pro", input: 1.25, cached: 0.31, output: 5.00, tier: "Versatile" },
+            { id: 'gemini-3-flash', name: "Gemini 3 Flash", input: 0.10, cached: 0.03, output: 0.40, tier: "Lightweight" },
+            { id: 'gemini-3-pro', name: "Gemini 3 Pro", input: 1.25, cached: 0.31, output: 5.00, tier: "Versatile" },
+            { id: 'gemini-3.1-pro', name: "Gemini 3.1 Pro", input: 1.25, cached: 0.31, output: 5.00, tier: "Versatile" },
+            { id: 'gpt-4o', name: "GPT-4o", input: 2.50, cached: 1.25, output: 10.00, tier: "Versatile" },
+            { id: 'gpt-4o-mini', name: "GPT-4o mini", input: 0.15, cached: 0.07, output: 0.60, tier: "Lightweight" },
+            { id: 'gpt-4.1', name: "GPT-4.1", input: 2.00, cached: 0.50, output: 8.00, tier: "Versatile" },
+            { id: 'gpt-5.1', name: "GPT-5.1", input: 2.00, cached: 0.20, output: 10.00, tier: "Powerful" },
+            { id: 'gpt-5.2', name: "GPT-5.2", input: 1.75, cached: 0.18, output: 14.00, tier: "Versatile" },
+            { id: 'gpt-5.3-codex', name: "GPT-5.3-Codex", input: 1.75, cached: 0.18, output: 14.00, tier: "Powerful" },
+            { id: 'gpt-5.4', name: "GPT-5.4", input: 2.50, cached: 0.25, output: 15.00, tier: "Versatile" },
+            { id: 'gpt-5.4-mini', name: "GPT-5.4 mini", input: 0.75, cached: 0.08, output: 4.50, tier: "Lightweight" },
+            { id: 'gpt-5.5', name: "GPT-5.5", input: 5.00, cached: 0.50, output: 30.00, tier: "Powerful" },
+            { id: 'gpt-5-mini', name: "GPT-5 mini", input: 0.25, cached: 0.03, output: 2.00, tier: "Lightweight" },
+            { id: 'grok-code-fast-1', name: "Grok Code Fast 1", input: 0.10, cached: 0.03, output: 0.40, tier: "Lightweight" },
+            { id: 'raptor-mini', name: "Raptor mini", input: 0.10, cached: 0.03, output: 0.40, tier: "Lightweight" }
+        ];
+
+        // --- APPLICATION STATE ---
+        const wbsState = {};
+        let currentProjectType = 'brownfield';
+        let currentCurrency = { code: 'USD', symbol: '$', rate: 1.0 };
+        
+        // Impact Distribution State
+        let impactState = { new: 50, update: 30, delete: 20 };
+
+        // Helper: Calculate blended cost to sort models
+        const getBlendedCost = (m) => (m.cached * 0.8) + (m.input * 0.1) + (m.output * 0.1);
+
+        // Initialize state for each task
+        TASKS.forEach(t => {
+            const relevant = MODELS.filter(m => t.allowedTiers.includes(m.tier));
+            relevant.sort((a, b) => getBlendedCost(a) - getBlendedCost(b));
+            
+            wbsState[t.id] = {
+                selected: (t.id === 'feature_dev_m'), // Default selected task
+                quantity: 1,
+                modelId: relevant[0].id,
+                cacheRate: t.profile.cachedRatio * 100
+            };
+        });
+
+        // --- FORMATTERS & DOM ELEMENTS ---
+        const formatTokens = (num) => {
+            if (num >= 1_000_000) return (num / 1_000_000).toFixed(2) + 'M';
+            if (num >= 1_000) return (num / 1_000).toFixed(1) + 'K';
+            return Math.round(num).toString();
+        };
+
+        const getTotalsFormatter = () => {
+             return new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: currentCurrency.code, 
+                minimumFractionDigits: 0, 
+                maximumFractionDigits: 0 
+            });
+        };
+
+        const getUnitFormatter = () => {
+             return new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: currentCurrency.code, 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 3 
+            });
+        };
+
+        const els = {
+            currencySelect: document.getElementById('currencySelect'),
+            typeBrownfield: document.getElementById('typeBrownfield'),
+            typeGreenfield: document.getElementById('typeGreenfield'),
+            brownfieldInputs: document.getElementById('brownfieldInputs'),
+            greenfieldInputs: document.getElementById('greenfieldInputs'),
+            
+            locInput: document.getElementById('locInput'),
+            pctNew: document.getElementById('pctNew'),
+            pctUpdate: document.getElementById('pctUpdate'),
+            pctDelete: document.getElementById('pctDelete'),
+            
+            impactSliderTrack: document.getElementById('impactSliderTrack'),
+            handle1: document.getElementById('handle1'),
+            handle2: document.getElementById('handle2'),
+            segmentNew: document.getElementById('segmentNew'),
+            segmentUpdate: document.getElementById('segmentUpdate'),
+            segmentDelete: document.getElementById('segmentDelete'),
+            
+            frictionContainer: document.getElementById('frictionContainer'),
+            frictionInput: document.getElementById('frictionInput'),
+            frictionDisplay: document.getElementById('frictionDisplay'),
+            
+            projectedTotalLoc: document.getElementById('projectedTotalLoc'),
+
+            langSelect: document.getElementById('langSelect'),
+            wbsContainer: document.getElementById('wbsContainer'),
+            
+            totalCostDollars: document.getElementById('totalCostDollars'),
+            costRangeLow: document.getElementById('costRangeLow'),
+            costRangeHigh: document.getElementById('costRangeHigh'),
+            grossTokensDisplay: document.getElementById('grossTokensDisplay'),
+            
+            barNew: document.getElementById('barNew'),
+            barCached: document.getElementById('barCached'),
+            barOutput: document.getElementById('barOutput'),
+            
+            newInputTokens: document.getElementById('newInputTokens'),
+            newInputCost: document.getElementById('newInputCost'),
+            cachedTokens: document.getElementById('cachedTokens'),
+            cachedCost: document.getElementById('cachedCost'),
+            outputTokens: document.getElementById('outputTokens'),
+            outputCost: document.getElementById('outputCost'),
+
+            tabCalcBtn: document.getElementById('tabCalcBtn'),
+            tabDataBtn: document.getElementById('tabDataBtn'),
+            tabHelpBtn: document.getElementById('tabHelpBtn'),
+            viewCalc: document.getElementById('viewCalc'),
+            viewData: document.getElementById('viewData'),
+            viewHelp: document.getElementById('viewHelp'),
+        };
+
+        // --- CORE LOGIC ---
+
+        function updateImpactStateManual(changedKey, value) {
+            let newVal = Math.max(0, Math.min(100, parseInt(value) || 0));
+            let diff = newVal - impactState[changedKey];
+            
+            if (diff === 0) return;
+            
+            impactState[changedKey] = newVal;
+            
+            let others = ['new', 'update', 'delete'].filter(k => k !== changedKey);
+            let totalOthers = impactState[others[0]] + impactState[others[1]];
+            
+            if (totalOthers === 0) {
+                let remainder = 100 - newVal;
+                impactState[others[0]] = Math.floor(remainder / 2);
+                impactState[others[1]] = remainder - impactState[others[0]];
+            } else {
+                let amt1 = Math.round(diff * (impactState[others[0]] / totalOthers));
+                let amt2 = diff - amt1;
+                
+                impactState[others[0]] = Math.max(0, impactState[others[0]] - amt1);
+                impactState[others[1]] = Math.max(0, impactState[others[1]] - amt2);
+                
+                let currentSum = impactState.new + impactState.update + impactState.delete;
+                if (currentSum !== 100) {
+                     impactState[others[1]] += (100 - currentSum);
+                }
+            }
+            
+            renderImpactSlider();
+            calculateGlobalCosts();
+        }
+
+        function renderImpactSlider() {
+            // Update Inputs
+            els.pctNew.value = impactState.new;
+            els.pctUpdate.value = impactState.update;
+            els.pctDelete.value = impactState.delete;
+            
+            // Update Segments
+            els.segmentNew.style.width = `${impactState.new}%`;
+            els.segmentNew.innerHTML = impactState.new > 10 ? `${impactState.new}%` : '';
+            
+            els.segmentUpdate.style.left = `${impactState.new}%`;
+            els.segmentUpdate.style.width = `${impactState.update}%`;
+            els.segmentUpdate.innerHTML = impactState.update > 10 ? `${impactState.update}%` : '';
+            
+            els.segmentDelete.style.left = `${impactState.new + impactState.update}%`;
+            els.segmentDelete.style.width = `${impactState.delete}%`;
+            els.segmentDelete.innerHTML = impactState.delete > 10 ? `${impactState.delete}%` : '';
+
+            // Update Handles
+            els.handle1.style.left = `${impactState.new}%`;
+            els.handle2.style.left = `${impactState.new + impactState.update}%`;
+        }
+
+        function initSliderDrag() {
+            let activeHandle = null;
+
+            const startDrag = (e, handleId) => {
+                activeHandle = handleId;
+                document.body.style.cursor = 'ew-resize';
+                e.preventDefault(); // prevent text selection
+            };
+
+            const onDrag = (e) => {
+                if (!activeHandle) return;
+
+                const rect = els.impactSliderTrack.getBoundingClientRect();
+                let clientX = e.clientX;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                }
+
+                let x = clientX - rect.left;
+                let pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+
+                if (activeHandle === 'handle1') {
+                    // Handle 1 determines 'new'. Cannot exceed Handle 2.
+                    const maxAllowed = impactState.new + impactState.update; // Position of handle2
+                    let newPct = Math.min(pct, maxAllowed - 1); // 1% buffer
+                    
+                    impactState.new = Math.round(newPct);
+                    impactState.update = Math.round(maxAllowed - impactState.new);
+                } else if (activeHandle === 'handle2') {
+                    // Handle 2 determines 'update' end. Cannot go below Handle 1.
+                    const minAllowed = impactState.new; // Position of handle1
+                    let handle2Pct = Math.max(pct, minAllowed + 1); // 1% buffer
+                    
+                    impactState.update = Math.round(handle2Pct - impactState.new);
+                    impactState.delete = Math.round(100 - handle2Pct);
+                }
+
+                // Force exact 100 sum in case of rounding errors
+                impactState.delete = 100 - impactState.new - impactState.update;
+                
+                renderImpactSlider();
+                calculateGlobalCosts();
+            };
+
+            const stopDrag = () => {
+                activeHandle = null;
+                document.body.style.cursor = 'default';
+            };
+
+            els.handle1.addEventListener('mousedown', (e) => startDrag(e, 'handle1'));
+            els.handle2.addEventListener('mousedown', (e) => startDrag(e, 'handle2'));
+            els.handle1.addEventListener('touchstart', (e) => startDrag(e, 'handle1'), {passive: false});
+            els.handle2.addEventListener('touchstart', (e) => startDrag(e, 'handle2'), {passive: false});
+
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('touchmove', onDrag, {passive: false});
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function generateModelOptionsHTML(task, selectedModelId) {
+            let relevant = MODELS.filter(m => task.allowedTiers.includes(m.tier)).sort((a,b) => getBlendedCost(a) - getBlendedCost(b));
+            let others = MODELS.filter(m => !task.allowedTiers.includes(m.tier)).sort((a,b) => getBlendedCost(a) - getBlendedCost(b));
+
+            let html = `<optgroup label="Relevant Models (Recommended)">`;
+            relevant.forEach((m, idx) => {
+                let label = idx === 0 ? `${m.name} (Optimal)` : `${m.name}`;
+                let isSel = m.id === selectedModelId ? 'selected' : '';
+                html += `<option value="${m.id}" ${isSel}>${label}</option>`;
+            });
+            html += `</optgroup><optgroup label="Other Models (Less Relevant)">`;
+            others.forEach(m => {
+                let isSel = m.id === selectedModelId ? 'selected' : '';
+                html += `<option value="${m.id}" ${isSel}>${m.name}</option>`;
+            });
+            html += `</optgroup>`;
+            return html;
+        }
+
+        // Feature -> PR auto-suggestion sync
+        function updatePRSuggestion() {
+            let prCount = 0;
+            TASKS.forEach(t => {
+                if (t.id.startsWith('feature_dev_') && wbsState[t.id].selected) {
+                    prCount += wbsState[t.id].quantity;
+                }
+            });
+            const newQty = prCount > 0 ? prCount : 1;
+            wbsState['pr_review'].quantity = newQty;
+            
+            const prInput = document.querySelector('.qty-input[data-id="pr_review"]');
+            if (prInput) prInput.value = newQty;
+        }
+
+        function renderWBSTable() {
+            els.wbsContainer.innerHTML = TASKS
+            .filter(t => !t.onlyBrownfield || currentProjectType === 'brownfield')
+            .map(t => {
+                const s = wbsState[t.id];
+                const activeClass = s.selected ? 'active' : 'inactive';
+                const isChecked = s.selected ? 'checked' : '';
+                
+                let qtyHtml = '';
+                if (t.hasQuantity) {
+                    qtyHtml = `<div class="flex flex-col items-center gap-1"><div class="flex items-center gap-1"><input type="number" min="1" max="1000" value="${s.quantity}" class="qty-input w-16 border border-slate-300 rounded p-1 text-sm text-center" data-id="${t.id}"> <span class="text-[10px] text-slate-500 uppercase font-bold">${t.unit}</span></div><span class="text-[9px] text-blue-500 font-bold bg-blue-50 px-1.5 rounded">~${(t.baseLoc * s.quantity).toLocaleString()} LOC</span></div>`;
+                } else if (t.scope === 'repo') {
+                    qtyHtml = `<span class="text-[10px] text-purple-600 bg-purple-50 px-2 py-1 rounded uppercase font-bold">Entire Repo</span>`;
+                }
+
+                return `
+                <div class="wbs-row ${activeClass} flex flex-col lg:grid lg:grid-cols-12 gap-4 items-center px-6 py-4 border-b border-slate-100" id="row_${t.id}">
+                    <div class="col-span-1 flex justify-start lg:justify-center w-full lg:w-auto">
+                        <input type="checkbox" class="task-checkbox w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" data-id="${t.id}" ${isChecked}>
+                    </div>
+                    <div class="col-span-4 w-full">
+                        <div class="font-bold text-slate-800">${t.name} <span class="text-[10px] bg-indigo-100 text-indigo-700 font-black px-1.5 py-0.5 rounded ml-1">${t.multiplier}x</span></div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${t.description}</div>
+                    </div>
+                    <div class="col-span-2 w-full flex items-center justify-start lg:justify-center">
+                        ${qtyHtml}
+                    </div>
+                    <div class="col-span-3 w-full space-y-1.5">
+                        <select class="model-select w-full border border-slate-300 rounded p-1.5 text-xs bg-white focus:ring-1 focus:ring-blue-500 outline-none" data-id="${t.id}">
+                            ${generateModelOptionsHTML(t, s.modelId)}
+                        </select>
+                        <div class="flex items-center justify-between text-[10px] text-slate-500 px-1">
+                            <span>Cache Read Rate:</span>
+                            <div class="flex items-center gap-1">
+                                <input type="number" min="0" max="99" value="${s.cacheRate}" class="cache-input w-10 border border-slate-300 rounded p-0.5 text-center bg-white" data-id="${t.id}"> %
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-span-2 w-full text-left lg:text-right">
+                        <div class="font-black text-lg text-slate-800" id="cost_${t.id}">${currentCurrency.symbol}0</div>
+                        <div class="text-[10px] text-slate-400 font-medium" id="tokens_${t.id}">0 tokens</div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // Bind Events for WBS dynamic inputs
+            document.querySelectorAll('.task-checkbox').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    const id = e.target.dataset.id;
+                    wbsState[id].selected = e.target.checked;
+                    
+                    const row = document.getElementById(`row_${id}`);
+                    if(e.target.checked) {
+                        row.classList.remove('inactive'); row.classList.add('active');
+                    } else {
+                        row.classList.remove('active'); row.classList.add('inactive');
+                    }
+                    
+                    if (id.startsWith('feature_dev_')) updatePRSuggestion();
+                    calculateGlobalCosts();
+                });
+            });
+
+            document.querySelectorAll('.qty-input').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    const id = e.target.dataset.id;
+                    wbsState[id].quantity = Math.max(1, parseInt(e.target.value) || 1);
+                    
+                    // Update LOC display label for features locally
+                    const task = TASKS.find(t => t.id === id);
+                    if(task && task.baseLoc) {
+                        const lbl = el.parentElement.parentElement.querySelector('span.text-blue-500');
+                        if(lbl) lbl.textContent = `~${(task.baseLoc * wbsState[id].quantity).toLocaleString()} LOC`;
+                    }
+
+                    if (id.startsWith('feature_dev_')) updatePRSuggestion();
+                    calculateGlobalCosts();
+                });
+            });
+
+            document.querySelectorAll('.model-select').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    wbsState[e.target.dataset.id].modelId = e.target.value;
+                    calculateGlobalCosts();
+                });
+            });
+
+            document.querySelectorAll('.cache-input').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    wbsState[e.target.dataset.id].cacheRate = Math.max(0, Math.min(99, parseInt(e.target.value) || 0));
+                    calculateGlobalCosts();
+                });
+            });
+        }
+
+        function calculateGlobalCosts() {
+            const lang = LANGUAGES.find(l => l.id === els.langSelect.value);
+            const totalsFormatter = getTotalsFormatter();
+            
+            // If greenfield, force friction to 1.0, otherwise grab from slider
+            const frictionFactor = currentProjectType === 'greenfield' ? 1.0 : (parseFloat(els.frictionInput.value) || 1.0);
+            
+            // 1. Calculate the Feature LOC additions
+            let totalFeatureLocGenerated = 0;
+            TASKS.forEach(t => {
+                if (t.scope === 'feature' && t.id.startsWith('feature_dev_') && wbsState[t.id].selected) {
+                    totalFeatureLocGenerated += (t.baseLoc * wbsState[t.id].quantity);
+                }
+            });
+
+            // 2. Calculate Projected Total Repo Size
+            let totalRepoLoc = 0;
+            if (currentProjectType === 'greenfield') {
+                totalRepoLoc = totalFeatureLocGenerated;
+            } else {
+                const legacyLoc = parseInt(els.locInput.value) || 0;
+                const addedLoc = totalFeatureLocGenerated * (impactState.new / 100);
+                const removedLoc = totalFeatureLocGenerated * (impactState.delete / 100);
+                // Repo size cannot drop below 0
+                totalRepoLoc = Math.max(0, legacyLoc + addedLoc - removedLoc);
+            }
+
+            // Update UI with Repo Size
+            els.projectedTotalLoc.textContent = `${Math.round(totalRepoLoc).toLocaleString()} LOC`;
+
+            let gTotals = {
+                gross: 0,
+                newInputTokens: 0, newInputCost: 0,
+                cachedTokens: 0, cachedCost: 0,
+                outputTokens: 0, outputCost: 0,
+                cost: 0
+            };
+
+            // 3. Process task costs based on their scope
+            TASKS.forEach(t => {
+                if (t.onlyBrownfield && currentProjectType === 'greenfield') return;
+
+                const s = wbsState[t.id];
+                const model = MODELS.find(m => m.id === s.modelId);
+                
+                let taskFootprintLoc = 0;
+                if (t.scope === 'repo') {
+                    taskFootprintLoc = totalRepoLoc; // Repo tasks use full context
+                } else if (t.scope === 'feature') {
+                    taskFootprintLoc = t.baseLoc * s.quantity; // Feature tasks use isolated context * qty
+                }
+                
+                // Stochastic Discovery vs Working Context Math
+                const baseTokens = taskFootprintLoc * lang.density;
+                const adjustedMultiplier = t.multiplier * frictionFactor;
+                
+                // Assume 25% of turns are "Discovery" (reading full context)
+                // Assume 75% of turns are "Working" (reading ~15% localized context)
+                const discoveryTokens = baseTokens * (adjustedMultiplier * 0.25);
+                const workingTokens = (baseTokens * 0.15) * (adjustedMultiplier * 0.75);
+                
+                const grossTokens = discoveryTokens + workingTokens;
+                
+                const outputTokens = grossTokens * t.profile.output;
+                const totalInputTokens = grossTokens - outputTokens;
+                
+                const cachedTokens = totalInputTokens * (s.cacheRate / 100);
+                const newInputTokens = totalInputTokens - cachedTokens;
+
+                // Apply Forex Rate to the output calculation
+                const costInput = (newInputTokens / 1_000_000) * model.input * currentCurrency.rate;
+                const costCached = (cachedTokens / 1_000_000) * model.cached * currentCurrency.rate;
+                const costOutput = (outputTokens / 1_000_000) * model.output * currentCurrency.rate;
+                const rowTotalCost = costInput + costCached + costOutput;
+
+                // Update Row UI
+                const rowCostEl = document.getElementById(`cost_${t.id}`);
+                const rowTokensEl = document.getElementById(`tokens_${t.id}`);
+                if (rowCostEl && rowTokensEl) {
+                    rowCostEl.textContent = totalsFormatter.format(rowTotalCost);
+                    rowTokensEl.textContent = `${formatTokens(grossTokens)} total tkns`;
+                    
+                    if(s.selected) {
+                        rowCostEl.classList.remove('text-slate-400'); rowCostEl.classList.add('text-slate-800');
+                    } else {
+                        rowCostEl.classList.add('text-slate-400'); rowCostEl.classList.remove('text-slate-800');
+                    }
+                }
+
+                // Add to Globals if selected
+                if (s.selected) {
+                    gTotals.gross += grossTokens;
+                    gTotals.newInputTokens += newInputTokens;
+                    gTotals.cachedTokens += cachedTokens;
+                    gTotals.outputTokens += outputTokens;
+                    gTotals.newInputCost += costInput;
+                    gTotals.cachedCost += costCached;
+                    gTotals.outputCost += costOutput;
+                    gTotals.cost += rowTotalCost;
+                }
+            });
+
+            // Update Global Dashboard UI (0 Decimals)
+            const rawCost = Math.round(gTotals.cost);
+            const formattedDollars = new Intl.NumberFormat('en-US').format(rawCost);
+            
+            els.totalCostDollars.innerHTML = `<span class="text-3xl md:text-4xl align-top mr-1 font-bold text-slate-400">${currentCurrency.symbol}</span>${formattedDollars}`;
+            
+            els.costRangeLow.textContent = totalsFormatter.format(gTotals.cost * 0.8);
+            els.costRangeHigh.textContent = totalsFormatter.format(gTotals.cost * 1.45);
+            
+            els.grossTokensDisplay.textContent = gTotals.gross.toLocaleString(undefined, {maximumFractionDigits: 0});
+
+            // Progress Bar widths
+            const safeGross = gTotals.gross > 0 ? gTotals.gross : 1;
+            els.barNew.style.width = `${(gTotals.newInputTokens / safeGross) * 100}%`;
+            els.barCached.style.width = `${(gTotals.cachedTokens / safeGross) * 100}%`;
+            els.barOutput.style.width = `${(gTotals.outputTokens / safeGross) * 100}%`;
+
+            // Breakdown Updates (0 Decimals)
+            els.newInputTokens.textContent = formatTokens(gTotals.newInputTokens);
+            els.newInputCost.textContent = totalsFormatter.format(gTotals.newInputCost);
+            
+            els.cachedTokens.textContent = formatTokens(gTotals.cachedTokens);
+            els.cachedCost.textContent = totalsFormatter.format(gTotals.cachedCost);
+            
+            els.outputTokens.textContent = formatTokens(gTotals.outputTokens);
+            els.outputCost.textContent = totalsFormatter.format(gTotals.outputCost);
+        }
+
+        // --- INITIALIZATION ---
+        function initializeApp() {
+            const tabs = [
+                { btn: els.tabCalcBtn, view: els.viewCalc },
+                { btn: els.tabHelpBtn, view: els.viewHelp },
+                { btn: els.tabDataBtn, view: els.viewData }
+            ];
+
+            const switchTab = (activeTab) => {
+                tabs.forEach(tab => {
+                    if (tab.btn === activeTab.btn) {
+                        tab.btn.className = "px-5 py-3 border-b-2 border-blue-600 text-blue-600 font-semibold transition-colors flex items-center gap-2";
+                        tab.view.style.display = 'block';
+                    } else {
+                        tab.btn.className = "px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-semibold transition-colors flex items-center gap-2";
+                        tab.view.style.display = 'none';
+                    }
+                });
+            };
+
+            els.tabCalcBtn.addEventListener('click', () => switchTab(tabs[0]));
+            els.tabHelpBtn.addEventListener('click', () => switchTab(tabs[1]));
+            els.tabDataBtn.addEventListener('click', () => switchTab(tabs[2]));
+
+            // Populate Repo Languages
+            LANGUAGES.forEach(l => {
+                const opt = new Option(`${l.name} (${l.density} tokens/line)`, l.id);
+                if(l.id === 'py') opt.selected = true;
+                els.langSelect.add(opt);
+            });
+
+            // Currency Listener
+            els.currencySelect.addEventListener('change', (e) => {
+                const opt = e.target.options[e.target.selectedIndex];
+                currentCurrency.code = e.target.value;
+                currentCurrency.symbol = opt.dataset.symbol;
+                currentCurrency.rate = parseFloat(opt.dataset.rate);
+                
+                renderDataTab(); // re-render data tab to show new currency symbol
+                renderWBSTable(); // re-render wbs to update the symbol inside select options
+                calculateGlobalCosts();
+            });
+
+            // Toggle Listeners
+            els.typeBrownfield.addEventListener('change', (e) => {
+                if(e.target.checked) {
+                    currentProjectType = 'brownfield';
+                    els.brownfieldInputs.classList.remove('hidden');
+                    els.greenfieldInputs.classList.add('hidden');
+                    // Show friction
+                    els.frictionContainer.classList.remove('hidden');
+                    
+                    renderWBSTable();
+                    calculateGlobalCosts();
+                }
+            });
+            els.typeGreenfield.addEventListener('change', (e) => {
+                if(e.target.checked) {
+                    currentProjectType = 'greenfield';
+                    els.brownfieldInputs.classList.add('hidden');
+                    els.greenfieldInputs.classList.remove('hidden');
+                    
+                    // Hide friction
+                    els.frictionContainer.classList.add('hidden');
+                    els.frictionInput.value = 1.0;
+                    els.frictionDisplay.textContent = "Standard (1.0x)";
+                    
+                    // Uncheck brownfield-only tasks so they don't hide ghost costs
+                    TASKS.forEach(t => {
+                        if (t.onlyBrownfield && wbsState[t.id]) {
+                            wbsState[t.id].selected = false;
+                        }
+                    });
+
+                    renderWBSTable();
+                    calculateGlobalCosts();
+                }
+            });
+
+            // Manual Impact Distribution Listeners
+            els.pctNew.addEventListener('change', (e) => updateImpactStateManual('new', e.target.value));
+            els.pctUpdate.addEventListener('change', (e) => updateImpactStateManual('update', e.target.value));
+            els.pctDelete.addEventListener('change', (e) => updateImpactStateManual('delete', e.target.value));
+
+            // Friction Listener
+            els.frictionInput.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value).toFixed(1);
+                let label = "Standard";
+                if (val < 0.8) label = "Clean/Decoupled";
+                else if (val > 1.5) label = "Spaghetti/Legacy";
+                else if (val > 1.0) label = "Complex";
+                
+                els.frictionDisplay.textContent = `${label} (${val}x)`;
+                calculateGlobalCosts();
+            });
+
+            // Global Listeners for Repo level
+            els.locInput.addEventListener('input', calculateGlobalCosts);
+            els.langSelect.addEventListener('change', calculateGlobalCosts);
+
+            // Init custom slider drag logic
+            initSliderDrag();
+            
+            // Render WBS and Data Tabs
+            renderImpactSlider();
+            renderWBSTable();
+            renderDataTab();
+            calculateGlobalCosts();
+        }
+
+        // --- REFERENCE DATA RENDERER ---
+        function renderDataTab() {
+            const unitFormatter = getUnitFormatter();
+            
+            const getTierColor = (tier) => {
+                if (tier === 'Powerful') return 'bg-purple-100 text-purple-700 border-purple-200';
+                if (tier === 'Versatile') return 'bg-blue-100 text-blue-700 border-blue-200';
+                if (tier === 'Lightweight') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                return 'bg-slate-100 text-slate-700 border-slate-200';
+            };
+
+            document.getElementById('dataModelsGrid').innerHTML = MODELS.map(m => `
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-slate-800 truncate pr-2" title="${m.name}">${m.name}</h4>
+                        <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border shrink-0 ${getTierColor(m.tier)}">${m.tier}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
+                        <div class="text-center"><div class="text-[10px] uppercase font-bold text-slate-400">Input</div><div class="text-sm font-semibold text-slate-700">${unitFormatter.format(m.input * currentCurrency.rate)}</div></div>
+                        <div class="text-center"><div class="text-[10px] uppercase font-bold text-emerald-500">Cached</div><div class="text-sm font-semibold text-emerald-700">${unitFormatter.format(m.cached * currentCurrency.rate)}</div></div>
+                        <div class="text-center"><div class="text-[10px] uppercase font-bold text-slate-400">Output</div><div class="text-sm font-semibold text-slate-700">${unitFormatter.format(m.output * currentCurrency.rate)}</div></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('dataTasksGrid').innerHTML = TASKS.map(t => `
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex gap-4 items-start">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 min-w-[90px] text-center shrink-0">
+                        <div class="text-[10px] uppercase font-bold text-slate-400 mb-1">Multiplier</div>
+                        <div class="text-2xl font-black text-purple-600">${t.multiplier}x</div>
+                    </div>
+                    <div class="flex-1 w-full">
+                        <h4 class="font-bold text-slate-800 text-lg">${t.name} <span class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 align-middle ml-2">${t.scope === 'feature' ? 'Feature Scoped' : 'Repo Scoped'}</span>${t.onlyBrownfield ? ' <span class="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 align-middle ml-1">Brownfield Only</span>' : ''}</h4>
+                        <p class="text-sm text-slate-500 mt-1 mb-3">${t.description}</p>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200"><i class="fa-solid fa-pen-nib"></i> ${(t.profile.output * 100).toFixed(0)}% Output</span>
+                            <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200"><i class="fa-solid fa-bolt text-amber-500"></i> ${(t.profile.cachedRatio * 100).toFixed(0)}% Cached</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('dataLangGrid').innerHTML = LANGUAGES.map(l => `
+                <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-3 flex justify-between items-center">
+                    <span class="font-semibold text-slate-700 text-sm truncate pr-2">${l.name}</span>
+                    <span class="bg-blue-50 text-blue-700 font-bold text-xs px-2 py-1 rounded-md border border-blue-100">${l.density}</span>
+                </div>
+            `).join('');
+        }
+
+        // Run Application
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
