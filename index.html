@@ -39,7 +39,7 @@
                         <i class="fa-solid fa-calculator text-white text-xl"></i>
                     </div>
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                        AI Cost Estimator
+                        Agentic Workflow Cost Estimator
                     </h1>
                 </div>
                 
@@ -247,9 +247,10 @@
                         <h3 class="text-slate-400 font-medium tracking-wide uppercase text-sm mb-2 flex items-center gap-2">
                             <i class="fa-solid fa-circle-dollar-to-slot"></i> Global Sprint Estimate
                         </h3>
-                        <!-- Notice: Cents removed here, digits rounded -->
+                        <!-- Notice: Cents added back here -->
                         <div class="flex items-baseline gap-2 mb-2">
                             <span class="text-5xl md:text-6xl font-black text-white tracking-tighter" id="totalCostDollars">$0</span>
+                            <span class="text-2xl font-bold text-slate-400" id="totalCostCents">.00</span>
                         </div>
                         <div class="text-slate-400 text-sm font-medium mb-6">
                             Estimated Range: <span class="text-emerald-400" id="costRangeLow">$0</span> - <span class="text-red-400" id="costRangeHigh">$0</span>
@@ -637,8 +638,8 @@
              return new Intl.NumberFormat('en-US', { 
                 style: 'currency', 
                 currency: currentCurrency.code, 
-                minimumFractionDigits: 0, 
-                maximumFractionDigits: 0 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
             });
         };
 
@@ -647,7 +648,7 @@
                 style: 'currency', 
                 currency: currentCurrency.code, 
                 minimumFractionDigits: 2, 
-                maximumFractionDigits: 3 
+                maximumFractionDigits: 2 
             });
         };
 
@@ -680,6 +681,7 @@
             wbsContainer: document.getElementById('wbsContainer'),
             
             totalCostDollars: document.getElementById('totalCostDollars'),
+            totalCostCents: document.getElementById('totalCostCents'),
             costRangeLow: document.getElementById('costRangeLow'),
             costRangeHigh: document.getElementById('costRangeHigh'),
             grossTokensDisplay: document.getElementById('grossTokensDisplay'),
@@ -893,7 +895,7 @@
                         </div>
                     </div>
                     <div class="col-span-2 w-full text-left lg:text-right">
-                        <div class="font-black text-lg text-slate-800" id="cost_${t.id}">${currentCurrency.symbol}0</div>
+                        <div class="font-black text-lg text-slate-800" id="cost_${t.id}">${currentCurrency.symbol}0.00</div>
                         <div class="text-[10px] text-slate-400 font-medium" id="tokens_${t.id}">0 tokens</div>
                     </div>
                 </div>
@@ -1052,11 +1054,17 @@
                 }
             });
 
-            // Update Global Dashboard UI (0 Decimals)
-            const rawCost = Math.round(gTotals.cost);
-            const formattedDollars = new Intl.NumberFormat('en-US').format(rawCost);
+            // Update Global Dashboard UI (2 Decimals)
+            const totalStr = totalsFormatter.format(gTotals.cost);
+            const currencyMatch = totalStr.match(/[^\d.,\s]+/);
+            const symbol = currencyMatch ? currencyMatch[0] : currentCurrency.symbol;
             
-            els.totalCostDollars.innerHTML = `<span class="text-3xl md:text-4xl align-top mr-1 font-bold text-slate-400">${currentCurrency.symbol}</span>${formattedDollars}`;
+            const rawCostStr = gTotals.cost.toFixed(2);
+            const [dollars, cents] = rawCostStr.split('.');
+            const formattedDollars = parseInt(dollars || 0).toLocaleString('en-US');
+            
+            els.totalCostDollars.innerHTML = `<span class="text-3xl md:text-4xl align-top mr-1 font-bold text-slate-400">${symbol}</span>${formattedDollars}`;
+            els.totalCostCents.textContent = `.${cents}`;
             
             els.costRangeLow.textContent = totalsFormatter.format(gTotals.cost * 0.8);
             els.costRangeHigh.textContent = totalsFormatter.format(gTotals.cost * 1.45);
