@@ -450,158 +450,13 @@
 
     </div>
 
+    <!-- Referential Data -->
+    <script src="data/languages.js"></script>
+    <script src="data/tasks.js"></script>
+    <script src="data/models.js"></script>
+
     <!-- Application Logic -->
     <script>
-        // --- DATA DICTIONARIES ---
-        const LANGUAGES = [
-            { id: 'js', name: "JavaScript", density: 7.0 },
-            { id: 'ts', name: "TypeScript / JSX", density: 9.0 },
-            { id: 'py', name: "Python / Godot", density: 10.0 },
-            { id: 'sh', name: "Shell / Scripting", density: 11.5 },
-            { id: 'go', name: "Go / Swift / PHP", density: 11.25 },
-            { id: 'st', name: "Industrial / ST", density: 11.5 },
-            { id: 'sql', name: "SQL / Data", density: 11.5 },
-            { id: 'rs', name: "Rust", density: 12.5 },
-            { id: 'java', name: "Java / C# / Apex", density: 13.25 },
-            { id: 'c', name: "C / C++ / Obj-C", density: 14.25 },
-            { id: 'yaml', name: "YAML / Terraform", density: 11.0 },
-            { id: 'md', name: "Documentation", density: 9.0 },
-            { id: 'json', name: "JSON / Config", density: 15.0 },
-            { id: 'xml', name: "XML / Markup", density: 18.0 },
-        ].sort((a, b) => a.name.localeCompare(b.name));
-
-        const TASKS = [
-            {
-                id: 'sprint_planning', name: "Sprint Planning & Forecasting", multiplier: 20.0,
-                profile: { output: 0.08, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
-                description: "Analyzing backlog against repository history to estimate effort.",
-                allowedTiers: ['Powerful']
-            },
-            {
-                id: 'arch_design', name: "Architecture & Scaffolding", multiplier: 15.0,
-                profile: { output: 0.05, cachedRatio: 0.90 }, hasQuantity: false, scope: 'repo',
-                description: "Translating PRDs into system architecture and boilerplate code.",
-                allowedTiers: ['Powerful']
-            },
-            {
-                id: 'challenge_specs', name: "Challenge Specs vs Codebase", multiplier: 12.0,
-                profile: { output: 0.05, cachedRatio: 0.95 }, hasQuantity: false, scope: 'repo',
-                description: "Cross-referencing PRDs against the current state of the codebase.",
-                allowedTiers: ['Versatile', 'Powerful']
-            },
-            {
-                id: 'feature_dev_s', name: "Feature Implementation (Small)", multiplier: 10.0,
-                profile: { output: 0.10, cachedRatio: 0.85 }, hasQuantity: true, unit: "Features",
-                scope: 'feature', baseLoc: 250,
-                description: "Minor tweaks or single CRUD endpoints (Scope: ~250 LOC / feature).",
-                allowedTiers: ['Lightweight', 'Versatile']
-            },
-            {
-                id: 'feature_dev_m', name: "Feature Implementation (Medium)", multiplier: 25.0,
-                profile: { output: 0.15, cachedRatio: 0.75 }, hasQuantity: true, unit: "Features",
-                scope: 'feature', baseLoc: 1000,
-                description: "Standard end-to-end feature coding (Scope: ~1,000 LOC / feature).",
-                allowedTiers: ['Versatile']
-            },
-            {
-                id: 'feature_dev_l', name: "Feature Implementation (Large)", multiplier: 50.0,
-                profile: { output: 0.20, cachedRatio: 0.65 }, hasQuantity: true, unit: "Features",
-                scope: 'feature', baseLoc: 5000,
-                description: "Multi-component cross-file reasoning (Scope: ~5,000 LOC / feature).",
-                allowedTiers: ['Versatile', 'Powerful']
-            },
-            {
-                id: 'feature_dev_xl', name: "Feature Implementation (Extra Large)", multiplier: 100.0,
-                profile: { output: 0.25, cachedRatio: 0.55 }, hasQuantity: true, unit: "Features",
-                scope: 'feature', baseLoc: 15000,
-                description: "Epic-level systemic features or core changes (Scope: ~15k LOC / epic).",
-                allowedTiers: ['Powerful']
-            },
-            {
-                id: 'pr_review', name: "Automated PR Review", multiplier: 8.0,
-                profile: { output: 0.05, cachedRatio: 0.95 }, hasQuantity: true, unit: "PRs",
-                scope: 'feature', baseLoc: 500,
-                description: "Deep codebase context analysis for diffs (Scope: ~500 LOC diff / PR).",
-                allowedTiers: ['Lightweight', 'Versatile']
-            },
-            {
-                id: 'security_audit', name: "Security Vulnerability Audit", multiplier: 45.0,
-                profile: { output: 0.02, cachedRatio: 0.90 }, hasQuantity: false, scope: 'repo',
-                description: "Tracing data flow paths across the repository to find exploits.",
-                allowedTiers: ['Powerful'],
-                onlyBrownfield: true
-            },
-            {
-                id: 'refactor_migration', name: "Legacy Codebase Migration", multiplier: 85.0,
-                profile: { output: 0.40, cachedRatio: 0.60 }, hasQuantity: false, scope: 'repo',
-                description: "Massive rewrites (e.g., JS to TS) with continuous test verification.",
-                allowedTiers: ['Powerful', 'Versatile'],
-                onlyBrownfield: true
-            },
-            {
-                id: 'tech_debt_mgmt', name: "Technical Debt Management", multiplier: 30.0,
-                profile: { output: 0.15, cachedRatio: 0.80 }, hasQuantity: false, scope: 'repo',
-                description: "Identifying, analyzing, and refactoring technical debt across the existing codebase.",
-                allowedTiers: ['Versatile', 'Powerful'],
-                onlyBrownfield: true
-            },
-            {
-                id: 'dependency_upgrade', name: "Dependency / Framework Upgrade", multiplier: 22.0,
-                profile: { output: 0.10, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
-                description: "Sweeping codebase to fix breaking changes caused by major framework version bumps.",
-                allowedTiers: ['Versatile', 'Powerful'],
-                onlyBrownfield: true
-            },
-            {
-                id: 'docs', name: "Documentation Sweep", multiplier: 4.2, 
-                profile: { output: 0.10, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
-                description: "Repository-wide synchronization, Wiki/README generation.",
-                allowedTiers: ['Lightweight']
-            },
-            {
-                id: 'quality', name: "Quality Assurance Audit", multiplier: 10.8,
-                profile: { output: 0.02, cachedRatio: 0.90 }, hasQuantity: false, scope: 'repo',
-                description: "Continuous syntax verification & architectural consistency checks.",
-                allowedTiers: ['Lightweight', 'Versatile']
-            },
-            {
-                id: 'test_standard', name: "Synthetic Test Gen (Standard)", multiplier: 70.0,
-                profile: { output: 0.25, cachedRatio: 0.80 }, hasQuantity: false, scope: 'repo',
-                description: "Generates tests to meet 1:1 ratio for web/backend systems.",
-                allowedTiers: ['Versatile']
-            },
-            {
-                id: 'test_industrial', name: "Synthetic Test Gen (Industrial/IoT)", multiplier: 120.0,
-                profile: { output: 0.20, cachedRatio: 0.85 }, hasQuantity: false, scope: 'repo',
-                description: "Strict safety compliance (MISRA C) & HIL mocking.",
-                allowedTiers: ['Powerful']
-            }
-        ];
-
-        const MODELS = [
-            { id: 'claude-haiku-4.5', name: "Claude Haiku 4.5", input: 1.00, cached: 0.10, output: 5.00, tier: "Versatile" },
-            { id: 'claude-opus-4.5', name: "Claude Opus 4.5", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful" },
-            { id: 'claude-opus-4.6', name: "Claude Opus 4.6", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful" },
-            { id: 'claude-opus-4.7', name: "Claude Opus 4.7", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful" },
-            { id: 'claude-sonnet-4.5', name: "Claude Sonnet 4.5", input: 3.00, cached: 0.30, output: 15.00, tier: "Versatile" },
-            { id: 'claude-sonnet-4.6', name: "Claude Sonnet 4.6", input: 3.00, cached: 0.30, output: 15.00, tier: "Versatile" },
-            { id: 'gemini-2.5-pro', name: "Gemini 2.5 Pro", input: 1.25, cached: 0.31, output: 5.00, tier: "Versatile" },
-            { id: 'gemini-3-flash', name: "Gemini 3 Flash", input: 0.10, cached: 0.03, output: 0.40, tier: "Lightweight" },
-            { id: 'gemini-3-pro', name: "Gemini 3 Pro", input: 1.25, cached: 0.31, output: 5.00, tier: "Versatile" },
-            { id: 'gemini-3.1-pro', name: "Gemini 3.1 Pro", input: 1.25, cached: 0.31, output: 5.00, tier: "Versatile" },
-            { id: 'gpt-4o', name: "GPT-4o", input: 2.50, cached: 1.25, output: 10.00, tier: "Versatile" },
-            { id: 'gpt-4o-mini', name: "GPT-4o mini", input: 0.15, cached: 0.07, output: 0.60, tier: "Lightweight" },
-            { id: 'gpt-4.1', name: "GPT-4.1", input: 2.00, cached: 0.50, output: 8.00, tier: "Versatile" },
-            { id: 'gpt-5.1', name: "GPT-5.1", input: 2.00, cached: 0.20, output: 10.00, tier: "Powerful" },
-            { id: 'gpt-5.2', name: "GPT-5.2", input: 1.75, cached: 0.18, output: 14.00, tier: "Versatile" },
-            { id: 'gpt-5.3-codex', name: "GPT-5.3-Codex", input: 1.75, cached: 0.18, output: 14.00, tier: "Powerful" },
-            { id: 'gpt-5.4', name: "GPT-5.4", input: 2.50, cached: 0.25, output: 15.00, tier: "Versatile" },
-            { id: 'gpt-5.4-mini', name: "GPT-5.4 mini", input: 0.75, cached: 0.08, output: 4.50, tier: "Lightweight" },
-            { id: 'gpt-5.5', name: "GPT-5.5", input: 5.00, cached: 0.50, output: 30.00, tier: "Powerful" },
-            { id: 'gpt-5-mini', name: "GPT-5 mini", input: 0.25, cached: 0.03, output: 2.00, tier: "Lightweight" },
-            { id: 'grok-code-fast-1', name: "Grok Code Fast 1", input: 0.10, cached: 0.03, output: 0.40, tier: "Lightweight" },
-            { id: 'raptor-mini', name: "Raptor mini", input: 0.10, cached: 0.03, output: 0.40, tier: "Lightweight" }
-        ];
 
         // --- APPLICATION STATE ---
         const wbsState = {};
@@ -617,12 +472,16 @@
         // Initialize state for each task
         TASKS.forEach(t => {
             const relevant = MODELS.filter(m => t.allowedTiers.includes(m.tier));
-            relevant.sort((a, b) => getBlendedCost(a) - getBlendedCost(b));
+            const nonDeprecated = relevant.filter(m => !m.deprecated);
+            
+            // Prioritize non-deprecated models for auto-suggestion
+            const sortList = nonDeprecated.length > 0 ? nonDeprecated : relevant;
+            sortList.sort((a, b) => getBlendedCost(a) - getBlendedCost(b));
             
             wbsState[t.id] = {
                 selected: (t.id === 'feature_dev_m'), // Default selected task
                 quantity: 1,
-                modelId: relevant[0].id,
+                modelId: sortList[0].id,
                 cacheRate: t.profile.cachedRatio * 100
             };
         });
@@ -823,8 +682,9 @@
         }
 
         function generateModelOptionsHTML(task, selectedModelId) {
-            let relevant = MODELS.filter(m => task.allowedTiers.includes(m.tier)).sort((a,b) => getBlendedCost(a) - getBlendedCost(b));
-            let others = MODELS.filter(m => !task.allowedTiers.includes(m.tier)).sort((a,b) => getBlendedCost(a) - getBlendedCost(b));
+            let relevant = MODELS.filter(m => task.allowedTiers.includes(m.tier) && !m.deprecated).sort((a,b) => getBlendedCost(a) - getBlendedCost(b));
+            let others = MODELS.filter(m => !task.allowedTiers.includes(m.tier) && !m.deprecated).sort((a,b) => getBlendedCost(a) - getBlendedCost(b));
+            let deprecatedModels = MODELS.filter(m => m.deprecated).sort((a,b) => getBlendedCost(a) - getBlendedCost(b));
 
             let html = `<optgroup label="Relevant Models (Recommended)">`;
             relevant.forEach((m, idx) => {
@@ -838,6 +698,15 @@
                 html += `<option value="${m.id}" ${isSel}>${m.name}</option>`;
             });
             html += `</optgroup>`;
+
+            if (deprecatedModels.length > 0) {
+                html += `<optgroup label="Deprecated Models">`;
+                deprecatedModels.forEach(m => {
+                    let isSel = m.id === selectedModelId ? 'selected' : '';
+                    html += `<option value="${m.id}" ${isSel}>${m.name} (Deprecated)</option>`;
+                });
+                html += `</optgroup>`;
+            }
             return html;
         }
 
@@ -1202,18 +1071,25 @@
         function renderDataTab() {
             const unitFormatter = getUnitFormatter();
             
-            const getTierColor = (tier) => {
+            const getTierColor = (tier, deprecated) => {
+                if (deprecated) return 'bg-rose-100 text-rose-700 border-rose-200';
                 if (tier === 'Powerful') return 'bg-purple-100 text-purple-700 border-purple-200';
                 if (tier === 'Versatile') return 'bg-blue-100 text-blue-700 border-blue-200';
                 if (tier === 'Lightweight') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
                 return 'bg-slate-100 text-slate-700 border-slate-200';
             };
 
-            document.getElementById('dataModelsGrid').innerHTML = MODELS.map(m => `
+            const sortedModelsForGrid = [...MODELS].sort((a, b) => {
+                if (a.deprecated && !b.deprecated) return 1;
+                if (!a.deprecated && b.deprecated) return -1;
+                return 0;
+            });
+
+            document.getElementById('dataModelsGrid').innerHTML = sortedModelsForGrid.map(m => `
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
                     <div class="flex justify-between items-start mb-4">
                         <h4 class="font-bold text-slate-800 truncate pr-2" title="${m.name}">${m.name}</h4>
-                        <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border shrink-0 ${getTierColor(m.tier)}">${m.tier}</span>
+                        <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-md border shrink-0 ${getTierColor(m.tier, m.deprecated)}">${m.deprecated ? 'Deprecated' : m.tier}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
                         <div class="text-center"><div class="text-[10px] uppercase font-bold text-slate-400">Input</div><div class="text-sm font-semibold text-slate-700">${unitFormatter.format(m.input * currentCurrency.rate)}</div></div>
