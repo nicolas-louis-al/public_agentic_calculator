@@ -1172,8 +1172,9 @@
             const addModelBtn = document.getElementById('addModelBtn');
             if (addModelBtn) {
                 addModelBtn.addEventListener('click', () => {
+                    const start = performance.now();
                     const newId = 'custom-' + Date.now();
-                    MODELS.push({
+                    MODELS.unshift({
                         id: newId,
                         name: "New Custom Model",
                         input: 1.00,
@@ -1184,15 +1185,18 @@
                     });
                     editingStates.models.add(newId);
                     renderDataTab();
-                    document.getElementById('dataModelsGrid').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    const end = performance.now();
+                    console.log(`[Performance] Add model card at beginning took ${(end - start).toFixed(4)} ms`);
+                    document.getElementById('dataModelsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             }
 
             const addWorkflowBtn = document.getElementById('addWorkflowBtn');
             if (addWorkflowBtn) {
                 addWorkflowBtn.addEventListener('click', () => {
+                    const start = performance.now();
                     const newId = 'custom-' + Date.now();
-                    TASKS.push({
+                    TASKS.unshift({
                         id: newId,
                         name: "New Custom Workflow",
                         description: "Describe the custom workflow step...",
@@ -1203,28 +1207,33 @@
                     });
                     wbsState[newId] = {
                         selected: false,
-                        model: MODELS.find(m => !m.deprecated)?.id || MODELS[0].id,
+                        modelId: MODELS.find(m => !m.deprecated)?.id || MODELS[0].id,
                         cacheRate: 80
                     };
                     editingStates.tasks.add(newId);
                     renderWBSTable();
                     renderDataTab();
-                    document.getElementById('dataTasksGrid').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    const end = performance.now();
+                    console.log(`[Performance] Add workflow card at beginning took ${(end - start).toFixed(4)} ms`);
+                    document.getElementById('dataTasksGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             }
 
             const addLangBtn = document.getElementById('addLangBtn');
             if (addLangBtn) {
                 addLangBtn.addEventListener('click', () => {
+                    const start = performance.now();
                     const newId = 'custom-' + Date.now();
-                    LANGUAGES.push({
+                    LANGUAGES.unshift({
                         id: newId,
                         name: "New Language",
                         density: 300
                     });
                     editingStates.languages.add(newId);
                     renderDataTab();
-                    document.getElementById('dataLangGrid').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    const end = performance.now();
+                    console.log(`[Performance] Add language card at beginning took ${(end - start).toFixed(4)} ms`);
+                    document.getElementById('dataLangGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             }
 
@@ -1574,8 +1583,8 @@
                         // Fix tasks in wbsState that were using the deleted model
                         const fallbackModelId = MODELS[0].id;
                         Object.keys(wbsState).forEach(taskId => {
-                            if (wbsState[taskId].model === id) {
-                                wbsState[taskId].model = fallbackModelId;
+                            if (wbsState[taskId].modelId === id) {
+                                wbsState[taskId].modelId = fallbackModelId;
                             }
                         });
 
