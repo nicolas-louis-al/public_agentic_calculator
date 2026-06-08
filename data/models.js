@@ -1,8 +1,9 @@
 const MODELS = [
     { id: 'claude-haiku-4.5', name: "Claude Haiku 4.5", input: 1.00, cached: 0.10, output: 5.00, tier: "Versatile", deprecated: false },
-    { id: 'claude-opus-4.5', name: "Claude Opus 4.5", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful", deprecated: true },
-    { id: 'claude-opus-4.6', name: "Claude Opus 4.6", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful", deprecated: false },
-    { id: 'claude-opus-4.7', name: "Claude Opus 4.7", input: 15.00, cached: 1.50, output: 75.00, tier: "Powerful", deprecated: false },
+    { id: 'claude-opus-4.5', name: "Claude Opus 4.5", input: 5.00, cached: 6.25, output: 0.50, tier: "Powerful", deprecated: true },
+    { id: 'claude-opus-4.6', name: "Claude Opus 4.6", input: 5.00, cached: 6.25, output: 0.50, tier: "Powerful", deprecated: false },
+    { id: 'claude-opus-4.7', name: "Claude Opus 4.7", input: 5.00, cached: 6.25, output: 0.50, tier: "Powerful", deprecated: false },
+    { id: 'claude-opus-4.8', name: "Claude Opus 4.8", input: 5.00, cached: 6.25, output: 0.50, tier: "Powerful", deprecated: false },
     { id: 'claude-sonnet-4.5', name: "Claude Sonnet 4.5", input: 3.00, cached: 0.30, output: 15.00, tier: "Versatile", deprecated: false },
     { id: 'claude-sonnet-4.6', name: "Claude Sonnet 4.6", input: 3.00, cached: 0.30, output: 15.00, tier: "Versatile", deprecated: false },
     { id: 'gemini-2.5-pro', name: "Gemini 2.5 Pro", input: 1.25, cached: 0.31, output: 5.00, tier: "Versatile", deprecated: true },
