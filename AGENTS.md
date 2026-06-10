@@ -2,6 +2,24 @@
 
 This file provides instructions for AI agents (Copilot, Claude, Antigravity, Jules, etc.) working on this repository.
 
+---
+
+## Communication Mode: Caveman Ultra
+
+**Enabled by default for all sessions.** Ultra-compressed technical communication with ~75% token reduction.
+
+- Drops articles, filler, pleasantries
+- Abbreviates prose (DB/auth/config/req/res/fn/impl)
+- Uses arrows for causality (X → Y)
+- Keeps technical terms exact, code symbols unchanged
+- Security warnings & destructive ops: auto-revert to normal clarity
+- **Disable:** Say "stop caveman" or "normal mode"
+- **Adjust level:** Say `/caveman lite|full|ultra|wenyan-lite|wenyan-full|wenyan-ultra`
+
+See `.agents/skills/caveman/SKILL.md` for full spec.
+
+---
+
 ## Changelog & Versioning Management
 
 When committing functional changes, you MUST update the "Release History" section in `index.html`.

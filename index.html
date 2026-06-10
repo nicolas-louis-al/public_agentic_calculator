@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Cost Estimator v1.6</title>
+    <title>Agentic Cost Estimator v1.8</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -73,6 +73,35 @@
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
             transition: all 0.2s ease-in-out;
         }
+        /* Collapsible Card Styles */
+        .collapsible-card-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .collapsible-card-header:hover {
+            background-color: #f8fafc;
+        }
+        .collapsible-chevron {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .collapsible-chevron.rotated {
+            transform: rotate(-180deg);
+        }
+        .collapsible-content {
+            max-height: 9999px;
+            opacity: 1;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900 font-sans p-4 md:p-8">
@@ -86,7 +115,7 @@
                         <i class="fa-solid fa-calculator text-white text-xl"></i>
                     </div>
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v1.6</span>
+                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v1.8</span>
                     </h1>
                 </div>
                 
@@ -130,16 +159,67 @@
         <!-- CALCULATOR VIEW -->
         <div id="viewCalc" class="space-y-6">
             
-            <!-- 1. Repository Metrics (Greenfield vs Brownfield) -->
+            <!-- 1. Quotation Setup Card -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center mb-6">
-                    <div class="flex items-center gap-3 w-full lg:w-1/3">
-                        <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-database text-xl"></i></div>
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-800">Project Context</h2>
-                            <p class="text-xs text-slate-500">Define the baseline footprint strategy</p>
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-lg"><i class="fa-solid fa-bookmark text-xl"></i></div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Quotation Setup</h2>
+                        <p class="text-xs text-slate-500">Define project metadata and save configuration</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Quotation Name</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-file-contract absolute left-3 top-3 text-slate-400"></i>
+                            <input id="quotationNameInput" type="text" placeholder="e.g., Client Project Q3 2026" class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-700" />
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Used for export filenames and project tracking</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Actions</label>
+                        <div class="flex gap-2 flex-wrap">
+                            <button id="saveJsonBtn" class="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-all shadow-sm">
+                                <i class="fa-solid fa-floppy-disk"></i> Save
+                            </button>
+                            <button id="loadJsonBtn" class="flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-all shadow-sm">
+                                <i class="fa-solid fa-upload"></i> Load
+                            </button>
+                            <button id="exportXlsxBtn" class="flex items-center gap-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-all shadow-sm">
+                                <i class="fa-solid fa-file-excel"></i> XLSX
+                            </button>
+                            <button id="exportPdfBtn" class="flex items-center gap-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition-all shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> PDF
+                            </button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- 2. Repository Metrics (Greenfield vs Brownfield) - Collapsible -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" data-collapsible-card="project">
+                <div class="collapsible-card-header bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-center" role="button" tabindex="0" aria-expanded="true">
+                    <div class="flex-1 flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+                        <div class="flex items-center gap-3 w-full lg:w-1/3">
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-database text-xl"></i></div>
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800">Project Context</h2>
+                                <p class="text-xs text-slate-500">Define the baseline footprint strategy</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-shrink-0">
+                        <i class="fa-solid fa-chevron-down collapsible-chevron text-slate-400 text-lg"></i>
+                    </div>
+                </div>
+                
+                <div class="collapsible-content">
+                <div class="p-6">
+                <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center mb-6">
+                    <div class="w-full lg:w-1/3">
 
                     <div class="w-full lg:w-1/3 flex gap-4 bg-slate-50 p-2 rounded-xl border border-slate-200">
                         <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer bg-white py-2 px-3 rounded-lg shadow-sm border border-slate-200 transition-all">
@@ -259,18 +339,25 @@
                     </div>
 
                 </div>
+                </div>
+                </div>
             </div>
 
-            <!-- 2. Work Breakdown Structure (WBS) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-center">
-                    <div>
+            <!-- 2. Work Breakdown Structure (WBS) - Collapsible -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" data-collapsible-card="wbs">
+                <div class="collapsible-card-header bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-center" role="button" tabindex="0" aria-expanded="true">
+                    <div class="flex-1">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-layer-group text-purple-500"></i> Task Selection (WBS)
                         </h2>
                         <p class="text-xs text-slate-500 mt-1">Check tasks to include. Configure quantity (for features & PRs) and optimize the model per task.</p>
                     </div>
+                    <div class="ml-4 flex-shrink-0">
+                        <i class="fa-solid fa-chevron-down collapsible-chevron text-slate-400 text-lg"></i>
+                    </div>
                 </div>
+                
+                <div class="collapsible-content">
 
                 <!-- Table Header -->
                 <div class="hidden lg:grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase tracking-wider px-6 py-3 bg-slate-100 border-b border-slate-200">
@@ -285,38 +372,33 @@
                 <div id="wbsContainer" class="divide-y divide-slate-100 p-2 space-y-2 lg:space-y-0 lg:p-0">
                     <!-- Rows injected by JS -->
                 </div>
+                </div>
+                </div>
             </div>
 
-            <!-- 3. Global Aggregation Dashboard -->
-            <div class="flex flex-col md:flex-row justify-end gap-3 mb-2">
-                <button id="exportXlsxBtn" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-emerald-600/20">
-                    <i class="fa-solid fa-file-excel"></i> Export XLSX
-                </button>
-                <button id="exportPdfBtn" class="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-rose-600/20">
-                    <i class="fa-solid fa-file-pdf"></i> Export PDF
-                </button>
-            </div>
+            <!-- Hidden file inputs for Save/Load -->
+            <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
                 
                 <!-- Primary Cost Display -->
-                <div class="lg:col-span-5 bg-slate-900 rounded-3xl shadow-xl overflow-hidden relative">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+                <div class="lg:col-span-5 bg-white rounded-3xl shadow-2xl overflow-hidden relative border border-slate-200">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
                     <div class="p-8">
-                        <h3 class="text-slate-400 font-medium tracking-wide uppercase text-sm mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-dollar-to-slot"></i> Global Sprint Estimate
+                        <h3 class="text-slate-500 font-semibold tracking-wide uppercase text-xs mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-dollar-to-slot text-blue-600"></i> Global Sprint Estimate
                         </h3>
                         <!-- Notice: Cents added back here -->
-                        <div class="flex items-baseline gap-2 mb-2">
-                            <span class="text-5xl md:text-6xl font-black text-white tracking-tighter" id="totalCostDollars">$0</span>
-                            <span class="text-2xl font-bold text-slate-400" id="totalCostCents">.00</span>
+                        <div class="flex items-baseline gap-2 mb-3">
+                            <span class="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter" id="totalCostDollars">$0</span>
+                            <span class="text-2xl font-bold text-slate-500" id="totalCostCents">.00</span>
                         </div>
-                        <div class="text-slate-400 text-sm font-medium mb-6">
-                            Estimated Range: <span class="text-emerald-400" id="costRangeLow">$0</span> - <span class="text-red-400" id="costRangeHigh">$0</span>
+                        <div class="text-slate-600 text-sm font-medium mb-6">
+                            Estimated Range: <span class="text-emerald-600 font-semibold" id="costRangeLow">$0</span> - <span class="text-rose-600 font-semibold" id="costRangeHigh">$0</span>
                         </div>
-                        <div class="pt-6 border-t border-slate-800">
-                            <p class="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Total Gross Tokens Analyzed</p>
-                            <p class="text-2xl font-semibold text-slate-100" id="grossTokensDisplay">0</p>
+                        <div class="pt-6 border-t border-slate-200">
+                            <p class="text-slate-500 text-xs uppercase font-bold tracking-wider mb-2">Total Gross Tokens Analyzed</p>
+                            <p class="text-2xl font-semibold text-slate-800" id="grossTokensDisplay">0</p>
                         </div>
                     </div>
                 </div>
@@ -576,15 +658,47 @@
 
                 <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
 
-                    <!-- v1.6 -->
+                    <!-- v1.8 -->
                     <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-arrow-down-up text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">Collapsible Cards</div>
+                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v1.8</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Task Selection (WBS) and Project Context cards now collapsible with smooth animations. Both expanded by default. State persists across page reloads via localStorage. Keyboard accessible (Enter/Space). Cost Summary & Token Expenditure always visible. Removed duplicate export buttons.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v1.7 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-bookmark text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">Quotation Persistence & Naming</div>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v1.7</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Added quotation naming field in header. Enable save/load quotations as JSON with full state persistence (tasks, settings, referential data). Export filenames now use quotation name for better project organization.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v1.6 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
                         <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                             <i class="fa-solid fa-file-shield text-xs"></i>
                         </div>
                         <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
                             <div class="flex items-center justify-between space-x-2 mb-1">
                                 <div class="font-bold text-slate-800">Legal Compliance & Reporting</div>
-                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v1.6</time>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v1.6</time>
                             </div>
                             <div class="text-slate-500 text-xs leading-relaxed">
                                 Integrated mandatory legal disclaimers into PDF (footer) and XLSX (dedicated tab) exports. Refined XLSX structure by merging Summary and Quotation for better readability.
@@ -800,6 +914,7 @@
         };
 
         const els = {
+            quotationNameInput: document.getElementById('quotationNameInput'),
             currencySelect: document.getElementById('currencySelect'),
             typeBrownfield: document.getElementById('typeBrownfield'),
             typeGreenfield: document.getElementById('typeGreenfield'),
@@ -853,6 +968,9 @@
             viewAbout: document.getElementById('viewAbout'),
 
             tabAboutBtn: document.getElementById('tabAboutBtn'),
+            saveJsonBtn: document.getElementById('saveJsonBtn'),
+            loadJsonBtn: document.getElementById('loadJsonBtn'),
+            jsonFileInput: document.getElementById('jsonFileInput'),
             exportXlsxBtn: document.getElementById('exportXlsxBtn'),
             exportPdfBtn: document.getElementById('exportPdfBtn'),
         };
@@ -1260,6 +1378,110 @@
             els.outputCost.textContent = totalsFormatter.format(gTotals.outputCost);
         }
 
+        // --- SAVE/LOAD QUOTATION ---
+        function saveQuotationJSON() {
+            const quotationName = els.quotationNameInput.value.trim() || 'Quotation';
+            
+            const saveData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                name: quotationName,
+                state: {
+                    wbsState,
+                    currentProjectType,
+                    impactState,
+                    currentCurrency: {
+                        code: currentCurrency.code,
+                        symbol: currentCurrency.symbol,
+                        rate: currentCurrency.rate
+                    }
+                },
+                referentialData: {
+                    LANGUAGES: JSON.parse(JSON.stringify(LANGUAGES)),
+                    MODELS: JSON.parse(JSON.stringify(MODELS)),
+                    TASKS: JSON.parse(JSON.stringify(TASKS))
+                }
+            };
+            
+            const jsonString = JSON.stringify(saveData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${quotationName}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function loadQuotationJSON() {
+            els.jsonFileInput.click();
+        }
+
+        function handleJsonFileLoad(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const loadedData = JSON.parse(event.target.result);
+                    
+                    // Validate version and structure
+                    if (!loadedData.version || !loadedData.state) {
+                        throw new Error('Invalid quotation file format');
+                    }
+                    
+                    // Restore quotation name
+                    els.quotationNameInput.value = loadedData.name || 'Quotation';
+                    
+                    // Restore application state
+                    Object.assign(wbsState, loadedData.state.wbsState);
+                    currentProjectType = loadedData.state.currentProjectType;
+                    Object.assign(impactState, loadedData.state.impactState);
+                    
+                    // Restore currency
+                    if (loadedData.state.currentCurrency) {
+                        const currencyOption = Array.from(els.currencySelect.options).find(
+                            opt => opt.value === loadedData.state.currentCurrency.code
+                        );
+                        if (currencyOption) {
+                            els.currencySelect.value = loadedData.state.currentCurrency.code;
+                        }
+                    }
+                    
+                    // UI sync
+                    if (currentProjectType === 'greenfield') {
+                        els.typeGreenfield.checked = true;
+                    } else {
+                        els.typeBrownfield.checked = true;
+                    }
+                    
+                    // Sync impact state UI
+                    els.pctNew.value = impactState.new;
+                    els.pctUpdate.value = impactState.update;
+                    els.pctDelete.value = impactState.delete;
+                    
+                    els.segmentNew.style.width = `${impactState.new}%`;
+                    els.segmentUpdate.style.width = `${impactState.update}%`;
+                    els.segmentDelete.style.width = `${impactState.delete}%`;
+                    
+                    // Rebuild WBS rows UI and recalculate
+                    renderWBSTable();
+                    calculateGlobalCosts();
+                    
+                    alert(`Quotation "${els.quotationNameInput.value}" loaded successfully!`);
+                } catch (error) {
+                    alert(`Error loading quotation: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset input so same file can be loaded again
+            els.jsonFileInput.value = '';
+        }
+
         function exportToXLSX() {
             const data = getCalculatedData();
             const { gTotals, taskDetails, lang, totalRepoLoc, frictionFactor } = data;
@@ -1344,7 +1566,8 @@
             XLSX.utils.book_append_sheet(wb, wsRef, "Reference Data");
             XLSX.utils.book_append_sheet(wb, wsDisclaimer, "Disclaimer");
 
-            XLSX.writeFile(wb, "agentic_cost_estimate.xlsx");
+            const quotationName = els.quotationNameInput.value.trim() || 'Quotation';
+            XLSX.writeFile(wb, `${quotationName}.xlsx`);
         }
 
         function exportToPDF() {
@@ -1494,7 +1717,80 @@
                 doc.text(`Page ${i} of ${pageCount}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
             }
 
-            doc.save("agentic_cost_estimate.pdf");
+            const quotationName = els.quotationNameInput.value.trim() || 'Quotation';
+            doc.save(`${quotationName}.pdf`);
+        }
+
+        // --- COLLAPSIBLE CARDS ---
+        function initializeCollapsibleCards() {
+            const CARD_STATES_KEY = 'cardCollapsibleStates';
+            
+            // Load persisted states from localStorage
+            let cardStates = JSON.parse(localStorage.getItem(CARD_STATES_KEY) || '{}');
+            
+            // Default states: WBS & Project expanded by default
+            const defaultStates = {
+                wbs: true,      // true = expanded
+                project: true   // true = expanded
+            };
+            
+            // Merge saved states with defaults
+            cardStates = { ...defaultStates, ...cardStates };
+            
+            // Apply initial states
+            Object.entries(cardStates).forEach(([cardId, isExpanded]) => {
+                const cardEl = document.querySelector(`[data-collapsible-card="${cardId}"]`);
+                if (!cardEl) return;
+                
+                const header = cardEl.querySelector('.collapsible-card-header');
+                const content = cardEl.querySelector('.collapsible-content');
+                const chevron = header.querySelector('.collapsible-chevron');
+                
+                if (!isExpanded) {
+                    content.classList.add('collapsed');
+                    chevron.classList.add('rotated');
+                    header.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Attach click handlers to all collapsible headers
+            document.querySelectorAll('.collapsible-card-header').forEach(header => {
+                const toggleCard = () => {
+                    const card = header.closest('[data-collapsible-card]');
+                    const cardId = card.dataset.collapsibleCard;
+                    const content = card.querySelector('.collapsible-content');
+                    const chevron = header.querySelector('.collapsible-chevron');
+                    
+                    const isCurrentlyCollapsed = content.classList.contains('collapsed');
+                    
+                    if (isCurrentlyCollapsed) {
+                        // Expand
+                        content.classList.remove('collapsed');
+                        chevron.classList.remove('rotated');
+                        header.setAttribute('aria-expanded', 'true');
+                        cardStates[cardId] = true;
+                    } else {
+                        // Collapse
+                        content.classList.add('collapsed');
+                        chevron.classList.add('rotated');
+                        header.setAttribute('aria-expanded', 'false');
+                        cardStates[cardId] = false;
+                    }
+                    
+                    // Persist state
+                    localStorage.setItem(CARD_STATES_KEY, JSON.stringify(cardStates));
+                };
+                
+                header.addEventListener('click', toggleCard);
+                
+                // Keyboard support: Enter or Space
+                header.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleCard();
+                    }
+                });
+            });
         }
 
         // --- INITIALIZATION ---
@@ -1526,9 +1822,17 @@
             els.tabDataBtn.addEventListener('click', () => switchTab(tabs[2]));
             els.tabAboutBtn.addEventListener('click', () => switchTab(tabs[3]));
 
+            // Bind Save/Load Quotation Buttons
+            els.saveJsonBtn.addEventListener('click', saveQuotationJSON);
+            els.loadJsonBtn.addEventListener('click', loadQuotationJSON);
+            els.jsonFileInput.addEventListener('change', handleJsonFileLoad);
+
             // Bind Export Buttons
             els.exportXlsxBtn.addEventListener('click', exportToXLSX);
             els.exportPdfBtn.addEventListener('click', exportToPDF);
+
+            // Initialize Collapsible Cards
+            initializeCollapsibleCards();
 
             // Bind the Export JSON button
             const exportBtn = document.getElementById('exportJsonBtn');
