@@ -12,7 +12,29 @@ permissions:
   pages: write
 
 jobs:
+  cleanup-old:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Remove old pr-preview folder
+        run: |
+          if [ -d "pr-preview" ]; then
+            rm -rf pr-preview
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add -A
+            git commit -m "Cleanup: remove old pr-preview folder structure" || echo "No changes to commit"
+            git push
+          fi
+        shell: bash
+
   deploy-preview:
+    needs: cleanup-old
     runs-on: ubuntu-latest
 
     steps:
