@@ -46,6 +46,7 @@ jobs:
         run: |
           npm install
           npm run build
+          touch build/.nojekyll
 
       - name: Deploy to GitHub Pages
         if: github.event.action != 'closed'
