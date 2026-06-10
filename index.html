@@ -8,6 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         /* Smooth transition for active row states */
         .wbs-row { transition: all 0.2s ease-in-out; }
@@ -279,6 +285,15 @@
             </div>
 
             <!-- 3. Global Aggregation Dashboard -->
+            <div class="flex flex-col md:flex-row justify-end gap-3 mb-2">
+                <button id="exportXlsxBtn" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-emerald-600/20">
+                    <i class="fa-solid fa-file-excel"></i> Export XLSX
+                </button>
+                <button id="exportPdfBtn" class="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-rose-600/20">
+                    <i class="fa-solid fa-file-pdf"></i> Export PDF
+                </button>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
                 
                 <!-- Primary Cost Display -->
@@ -686,6 +701,9 @@
             viewCalc: document.getElementById('viewCalc'),
             viewData: document.getElementById('viewData'),
             viewHelp: document.getElementById('viewHelp'),
+
+            exportXlsxBtn: document.getElementById('exportXlsxBtn'),
+            exportPdfBtn: document.getElementById('exportPdfBtn'),
         };
 
         // --- CORE LOGIC ---
@@ -945,14 +963,10 @@
             });
         }
 
-        function calculateGlobalCosts() {
+        function getCalculatedData() {
             const lang = LANGUAGES.find(l => l.id === els.langSelect.value);
-            const totalsFormatter = getTotalsFormatter();
-            
-            // If greenfield, force friction to 1.0, otherwise grab from slider
             const frictionFactor = currentProjectType === 'greenfield' ? 1.0 : (parseFloat(els.frictionInput.value) || 1.0);
             
-            // 1. Calculate the Feature LOC additions
             let totalFeatureLocGenerated = 0;
             TASKS.forEach(t => {
                 if (t.scope === 'feature' && t.id.startsWith('feature_dev_') && wbsState[t.id].selected) {
@@ -960,7 +974,6 @@
                 }
             });
 
-            // 2. Calculate Projected Total Repo Size
             let totalRepoLoc = 0;
             if (currentProjectType === 'greenfield') {
                 totalRepoLoc = totalFeatureLocGenerated;
@@ -968,12 +981,8 @@
                 const legacyLoc = parseInt(els.locInput.value) || 0;
                 const addedLoc = totalFeatureLocGenerated * (impactState.new / 100);
                 const removedLoc = totalFeatureLocGenerated * (impactState.delete / 100);
-                // Repo size cannot drop below 0
                 totalRepoLoc = Math.max(0, legacyLoc + addedLoc - removedLoc);
             }
-
-            // Update UI with Repo Size
-            els.projectedTotalLoc.textContent = `${Math.round(totalRepoLoc).toLocaleString()} LOC`;
 
             let gTotals = {
                 gross: 0,
@@ -983,58 +992,34 @@
                 cost: 0
             };
 
-            // 3. Process task costs based on their scope
-            TASKS.forEach(t => {
-                if (t.onlyBrownfield && currentProjectType === 'greenfield') return;
+            const taskDetails = TASKS.map(t => {
+                if (t.onlyBrownfield && currentProjectType === 'greenfield') return null;
 
                 const s = wbsState[t.id];
                 const model = MODELS.find(m => m.id === s.modelId);
                 
                 let taskFootprintLoc = 0;
                 if (t.scope === 'repo') {
-                    taskFootprintLoc = totalRepoLoc; // Repo tasks use full context
+                    taskFootprintLoc = totalRepoLoc;
                 } else if (t.scope === 'feature') {
-                    taskFootprintLoc = t.baseLoc * s.quantity; // Feature tasks use isolated context * qty
+                    taskFootprintLoc = t.baseLoc * s.quantity;
                 }
                 
-                // Stochastic Discovery vs Working Context Math
                 const baseTokens = taskFootprintLoc * lang.density;
                 const adjustedMultiplier = t.multiplier * frictionFactor;
-                
-                // Assume 25% of turns are "Discovery" (reading full context)
-                // Assume 75% of turns are "Working" (reading ~15% localized context)
                 const discoveryTokens = baseTokens * (adjustedMultiplier * 0.25);
                 const workingTokens = (baseTokens * 0.15) * (adjustedMultiplier * 0.75);
-                
                 const grossTokens = discoveryTokens + workingTokens;
-                
                 const outputTokens = grossTokens * t.profile.output;
                 const totalInputTokens = grossTokens - outputTokens;
-                
                 const cachedTokens = totalInputTokens * (s.cacheRate / 100);
                 const newInputTokens = totalInputTokens - cachedTokens;
 
-                // Apply Forex Rate to the output calculation
                 const costInput = (newInputTokens / 1_000_000) * model.input * currentCurrency.rate;
                 const costCached = (cachedTokens / 1_000_000) * model.cached * currentCurrency.rate;
                 const costOutput = (outputTokens / 1_000_000) * model.output * currentCurrency.rate;
                 const rowTotalCost = costInput + costCached + costOutput;
 
-                // Update Row UI
-                const rowCostEl = document.getElementById(`cost_${t.id}`);
-                const rowTokensEl = document.getElementById(`tokens_${t.id}`);
-                if (rowCostEl && rowTokensEl) {
-                    rowCostEl.textContent = totalsFormatter.format(rowTotalCost);
-                    rowTokensEl.textContent = `${formatTokens(grossTokens)} total tkns`;
-                    
-                    if(s.selected) {
-                        rowCostEl.classList.remove('text-slate-400'); rowCostEl.classList.add('text-slate-800');
-                    } else {
-                        rowCostEl.classList.add('text-slate-400'); rowCostEl.classList.remove('text-slate-800');
-                    }
-                }
-
-                // Add to Globals if selected
                 if (s.selected) {
                     gTotals.gross += grossTokens;
                     gTotals.newInputTokens += newInputTokens;
@@ -1045,9 +1030,52 @@
                     gTotals.outputCost += costOutput;
                     gTotals.cost += rowTotalCost;
                 }
+
+                return {
+                    task: t,
+                    state: s,
+                    model: model,
+                    grossTokens,
+                    newInputTokens,
+                    cachedTokens,
+                    outputTokens,
+                    rowTotalCost,
+                    taskFootprintLoc
+                };
+            }).filter(d => d !== null);
+
+            return {
+                lang,
+                frictionFactor,
+                totalRepoLoc,
+                totalFeatureLocGenerated,
+                gTotals,
+                taskDetails
+            };
+        }
+
+        function calculateGlobalCosts() {
+            const data = getCalculatedData();
+            const { gTotals, taskDetails, totalRepoLoc } = data;
+            const totalsFormatter = getTotalsFormatter();
+
+            els.projectedTotalLoc.textContent = `${Math.round(totalRepoLoc).toLocaleString()} LOC`;
+
+            taskDetails.forEach(d => {
+                const rowCostEl = document.getElementById(`cost_${d.task.id}`);
+                const rowTokensEl = document.getElementById(`tokens_${d.task.id}`);
+                if (rowCostEl && rowTokensEl) {
+                    rowCostEl.textContent = totalsFormatter.format(d.rowTotalCost);
+                    rowTokensEl.textContent = `${formatTokens(d.grossTokens)} total tkns`;
+
+                    if(d.state.selected) {
+                        rowCostEl.classList.remove('text-slate-400'); rowCostEl.classList.add('text-slate-800');
+                    } else {
+                        rowCostEl.classList.add('text-slate-400'); rowCostEl.classList.remove('text-slate-800');
+                    }
+                }
             });
 
-            // Update Global Dashboard UI (2 Decimals)
             const totalStr = totalsFormatter.format(gTotals.cost);
             const currencyMatch = totalStr.match(/[^\d.,\s]+/);
             const symbol = currencyMatch ? currencyMatch[0] : currentCurrency.symbol;
@@ -1081,6 +1109,152 @@
             els.outputCost.textContent = totalsFormatter.format(gTotals.outputCost);
         }
 
+        function exportToXLSX() {
+            const data = getCalculatedData();
+            const { gTotals, taskDetails, lang, totalRepoLoc, frictionFactor } = data;
+            const totalsFormatter = getTotalsFormatter();
+
+            // 1. Summary Sheet
+            const summaryData = [
+                ["Agentic Cost Estimate - Summary"],
+                [],
+                ["Project Metadata"],
+                ["Project Type", currentProjectType.toUpperCase()],
+                ["Primary Language", lang.name],
+                ["Language Density", `${lang.density} tokens/line`],
+                ["Projected Total Repo Size", `${Math.round(totalRepoLoc).toLocaleString()} LOC`],
+                ["Codebase Friction", `${frictionFactor}x`],
+                ["Currency", `${currentCurrency.code} (${currentCurrency.symbol})`],
+                [],
+                ["Global Sprint Totals"],
+                ["Total Estimated Cost", totalsFormatter.format(gTotals.cost)],
+                ["Cost Range (Low)", totalsFormatter.format(gTotals.cost * 0.8)],
+                ["Cost Range (High)", totalsFormatter.format(gTotals.cost * 1.45)],
+                ["Total Gross Tokens", Math.round(gTotals.gross).toLocaleString()],
+                [],
+                ["Token Breakdown"],
+                ["New Input Tokens", Math.round(gTotals.newInputTokens).toLocaleString()],
+                ["New Input Cost", totalsFormatter.format(gTotals.newInputCost)],
+                ["Cached Input Tokens", Math.round(gTotals.cachedTokens).toLocaleString()],
+                ["Cached Input Cost", totalsFormatter.format(gTotals.cachedCost)],
+                ["Output Tokens", Math.round(gTotals.outputTokens).toLocaleString()],
+                ["Output Cost", totalsFormatter.format(gTotals.outputCost)]
+            ];
+
+            // 2. WBS Breakdown Sheet
+            const wbsHeader = [
+                "Included", "Operation", "Scope", "Quantity", "Base LOC", "Model", "Multiplier", "Cache Rate", "Gross Tokens", "Estimated Cost"
+            ];
+            const wbsRows = taskDetails.map(d => [
+                d.state.selected ? "YES" : "NO",
+                d.task.name,
+                d.task.scope === 'repo' ? "Entire Repo" : "Feature Scoped",
+                d.task.hasQuantity ? d.state.quantity : "-",
+                d.taskFootprintLoc.toLocaleString(),
+                d.model.name,
+                `${d.task.multiplier}x`,
+                `${d.state.cacheRate}%`,
+                Math.round(d.grossTokens).toLocaleString(),
+                totalsFormatter.format(d.rowTotalCost)
+            ]);
+
+            const wb = XLSX.utils.book_new();
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            const wsWBS = XLSX.utils.aoa_to_sheet([wbsHeader, ...wbsRows]);
+
+            XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+            XLSX.utils.book_append_sheet(wb, wsWBS, "WBS Breakdown");
+
+            XLSX.writeFile(wb, "agentic_cost_estimate.xlsx");
+        }
+
+        function exportToPDF() {
+            const data = getCalculatedData();
+            const { gTotals, taskDetails, lang, totalRepoLoc, frictionFactor } = data;
+            const totalsFormatter = getTotalsFormatter();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // PDF Title
+            doc.setFontSize(20);
+            doc.setTextColor(37, 99, 235); // Blue-600
+            doc.text("Agentic Cost Estimate Report", 14, 22);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+
+            // Metadata Section
+            doc.setFontSize(14);
+            doc.setTextColor(30, 41, 59); // Slate-800
+            doc.text("Project Context", 14, 45);
+
+            const metaData = [
+                ["Project Type", currentProjectType.toUpperCase()],
+                ["Primary Language", lang.name],
+                ["Language Density", `${lang.density} tokens/line`],
+                ["Projected Total Repo Size", `${Math.round(totalRepoLoc).toLocaleString()} LOC`],
+                ["Codebase Friction", `${frictionFactor}x`],
+                ["Currency", `${currentCurrency.code} (${currentCurrency.symbol})`]
+            ];
+
+            doc.autoTable({
+                startY: 50,
+                head: [["Attribute", "Value"]],
+                body: metaData,
+                theme: 'striped',
+                headStyles: { fillColor: [71, 85, 105] }
+            });
+
+            // Summary Totals
+            doc.setFontSize(14);
+            doc.text("Estimation Summary", 14, doc.lastAutoTable.finalY + 15);
+
+            const summaryData = [
+                ["Total Estimated Cost", { content: totalsFormatter.format(gTotals.cost), styles: { fontStyle: 'bold', textColor: [5, 150, 105] } }],
+                ["Cost Range", `${totalsFormatter.format(gTotals.cost * 0.8)} - ${totalsFormatter.format(gTotals.cost * 1.45)}`],
+                ["Total Gross Tokens", Math.round(gTotals.gross).toLocaleString()],
+                ["New Input Tokens", Math.round(gTotals.newInputTokens).toLocaleString()],
+                ["Cached Input Tokens", Math.round(gTotals.cachedTokens).toLocaleString()],
+                ["Output Tokens", Math.round(gTotals.outputTokens).toLocaleString()]
+            ];
+
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 20,
+                body: summaryData,
+                theme: 'plain',
+                styles: { fontSize: 10 }
+            });
+
+            // WBS Breakdown
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.text("Detailed Work Breakdown Structure (WBS)", 14, 22);
+
+            const wbsHeader = [["Task", "Scope", "Qty", "Model", "Tokens", "Cost"]];
+            const wbsRows = taskDetails
+                .filter(d => d.state.selected)
+                .map(d => [
+                    d.task.name,
+                    d.task.scope === 'repo' ? "Repo" : "Feature",
+                    d.task.hasQuantity ? d.state.quantity : "-",
+                    d.model.name,
+                    formatTokens(d.grossTokens),
+                    totalsFormatter.format(d.rowTotalCost)
+                ]);
+
+            doc.autoTable({
+                startY: 28,
+                head: wbsHeader,
+                body: wbsRows,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
+                styles: { fontSize: 9 }
+            });
+
+            doc.save("agentic_cost_estimate.pdf");
+        }
+
         // --- INITIALIZATION ---
         function initializeApp() {
             const tabs = [
@@ -1107,6 +1281,10 @@
             els.tabCalcBtn.addEventListener('click', () => switchTab(tabs[0]));
             els.tabHelpBtn.addEventListener('click', () => switchTab(tabs[1]));
             els.tabDataBtn.addEventListener('click', () => switchTab(tabs[2]));
+
+            // Bind Export Buttons
+            els.exportXlsxBtn.addEventListener('click', exportToXLSX);
+            els.exportPdfBtn.addEventListener('click', exportToPDF);
 
             // Bind the Export JSON button
             const exportBtn = document.getElementById('exportJsonBtn');
