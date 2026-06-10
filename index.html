@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Cost Estimator v1.6</title>
+    <title>Agentic Cost Estimator v1.7</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -86,10 +86,16 @@
                         <i class="fa-solid fa-calculator text-white text-xl"></i>
                     </div>
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v1.6</span>
+                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v1.7</span>
                     </h1>
                 </div>
                 
+                <!-- Quotation Name -->
+                <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm ml-14 md:ml-0 self-start md:self-auto">
+                    <i class="fa-solid fa-file-contract text-slate-400"></i>
+                    <input id="quotationNameInput" type="text" placeholder="Quotation name..." class="bg-transparent border-none text-sm font-semibold text-slate-700 focus:ring-0 outline-none placeholder-slate-400 max-w-xs" />
+                </div>
+
                 <!-- Currency Selector with Forex Rates -->
                 <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm ml-14 md:ml-0 self-start md:self-auto">
                     <i class="fa-solid fa-coins text-slate-400"></i>
@@ -289,6 +295,12 @@
 
             <!-- 3. Global Aggregation Dashboard -->
             <div class="flex flex-col md:flex-row justify-end gap-3 mb-2">
+                <button id="saveJsonBtn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-blue-600/20">
+                    <i class="fa-solid fa-floppy-disk"></i> Save JSON
+                </button>
+                <button id="loadJsonBtn" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-indigo-600/20">
+                    <i class="fa-solid fa-upload"></i> Load JSON
+                </button>
                 <button id="exportXlsxBtn" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-emerald-600/20">
                     <i class="fa-solid fa-file-excel"></i> Export XLSX
                 </button>
@@ -296,6 +308,9 @@
                     <i class="fa-solid fa-file-pdf"></i> Export PDF
                 </button>
             </div>
+
+            <!-- Hidden file inputs for Save/Load -->
+            <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
                 
@@ -576,15 +591,31 @@
 
                 <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
 
-                    <!-- v1.6 -->
+                    <!-- v1.7 -->
                     <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-bookmark text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">Quotation Persistence & Naming</div>
+                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v1.7</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Added quotation naming field in header. Enable save/load quotations as JSON with full state persistence (tasks, settings, referential data). Export filenames now use quotation name for better project organization.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v1.6 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
                         <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                             <i class="fa-solid fa-file-shield text-xs"></i>
                         </div>
                         <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
                             <div class="flex items-center justify-between space-x-2 mb-1">
                                 <div class="font-bold text-slate-800">Legal Compliance & Reporting</div>
-                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v1.6</time>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v1.6</time>
                             </div>
                             <div class="text-slate-500 text-xs leading-relaxed">
                                 Integrated mandatory legal disclaimers into PDF (footer) and XLSX (dedicated tab) exports. Refined XLSX structure by merging Summary and Quotation for better readability.
@@ -800,6 +831,7 @@
         };
 
         const els = {
+            quotationNameInput: document.getElementById('quotationNameInput'),
             currencySelect: document.getElementById('currencySelect'),
             typeBrownfield: document.getElementById('typeBrownfield'),
             typeGreenfield: document.getElementById('typeGreenfield'),
@@ -853,6 +885,9 @@
             viewAbout: document.getElementById('viewAbout'),
 
             tabAboutBtn: document.getElementById('tabAboutBtn'),
+            saveJsonBtn: document.getElementById('saveJsonBtn'),
+            loadJsonBtn: document.getElementById('loadJsonBtn'),
+            jsonFileInput: document.getElementById('jsonFileInput'),
             exportXlsxBtn: document.getElementById('exportXlsxBtn'),
             exportPdfBtn: document.getElementById('exportPdfBtn'),
         };
@@ -1260,6 +1295,110 @@
             els.outputCost.textContent = totalsFormatter.format(gTotals.outputCost);
         }
 
+        // --- SAVE/LOAD QUOTATION ---
+        function saveQuotationJSON() {
+            const quotationName = els.quotationNameInput.value.trim() || 'Quotation';
+            
+            const saveData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                name: quotationName,
+                state: {
+                    wbsState,
+                    currentProjectType,
+                    impactState,
+                    currentCurrency: {
+                        code: currentCurrency.code,
+                        symbol: currentCurrency.symbol,
+                        rate: currentCurrency.rate
+                    }
+                },
+                referentialData: {
+                    LANGUAGES: JSON.parse(JSON.stringify(LANGUAGES)),
+                    MODELS: JSON.parse(JSON.stringify(MODELS)),
+                    TASKS: JSON.parse(JSON.stringify(TASKS))
+                }
+            };
+            
+            const jsonString = JSON.stringify(saveData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${quotationName}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function loadQuotationJSON() {
+            els.jsonFileInput.click();
+        }
+
+        function handleJsonFileLoad(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const loadedData = JSON.parse(event.target.result);
+                    
+                    // Validate version and structure
+                    if (!loadedData.version || !loadedData.state) {
+                        throw new Error('Invalid quotation file format');
+                    }
+                    
+                    // Restore quotation name
+                    els.quotationNameInput.value = loadedData.name || 'Quotation';
+                    
+                    // Restore application state
+                    Object.assign(wbsState, loadedData.state.wbsState);
+                    currentProjectType = loadedData.state.currentProjectType;
+                    Object.assign(impactState, loadedData.state.impactState);
+                    
+                    // Restore currency
+                    if (loadedData.state.currentCurrency) {
+                        const currencyOption = Array.from(els.currencySelect.options).find(
+                            opt => opt.value === loadedData.state.currentCurrency.code
+                        );
+                        if (currencyOption) {
+                            els.currencySelect.value = loadedData.state.currentCurrency.code;
+                        }
+                    }
+                    
+                    // UI sync
+                    if (currentProjectType === 'greenfield') {
+                        els.typeGreenfield.checked = true;
+                    } else {
+                        els.typeBrownfield.checked = true;
+                    }
+                    
+                    // Sync impact state UI
+                    els.pctNew.value = impactState.new;
+                    els.pctUpdate.value = impactState.update;
+                    els.pctDelete.value = impactState.delete;
+                    
+                    els.segmentNew.style.width = `${impactState.new}%`;
+                    els.segmentUpdate.style.width = `${impactState.update}%`;
+                    els.segmentDelete.style.width = `${impactState.delete}%`;
+                    
+                    // Rebuild WBS rows UI and recalculate
+                    renderWBSTable();
+                    calculateGlobalCosts();
+                    
+                    alert(`Quotation "${els.quotationNameInput.value}" loaded successfully!`);
+                } catch (error) {
+                    alert(`Error loading quotation: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset input so same file can be loaded again
+            els.jsonFileInput.value = '';
+        }
+
         function exportToXLSX() {
             const data = getCalculatedData();
             const { gTotals, taskDetails, lang, totalRepoLoc, frictionFactor } = data;
@@ -1344,7 +1483,8 @@
             XLSX.utils.book_append_sheet(wb, wsRef, "Reference Data");
             XLSX.utils.book_append_sheet(wb, wsDisclaimer, "Disclaimer");
 
-            XLSX.writeFile(wb, "agentic_cost_estimate.xlsx");
+            const quotationName = els.quotationNameInput.value.trim() || 'Quotation';
+            XLSX.writeFile(wb, `${quotationName}.xlsx`);
         }
 
         function exportToPDF() {
@@ -1494,7 +1634,8 @@
                 doc.text(`Page ${i} of ${pageCount}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
             }
 
-            doc.save("agentic_cost_estimate.pdf");
+            const quotationName = els.quotationNameInput.value.trim() || 'Quotation';
+            doc.save(`${quotationName}.pdf`);
         }
 
         // --- INITIALIZATION ---
@@ -1525,6 +1666,11 @@
             els.tabHelpBtn.addEventListener('click', () => switchTab(tabs[1]));
             els.tabDataBtn.addEventListener('click', () => switchTab(tabs[2]));
             els.tabAboutBtn.addEventListener('click', () => switchTab(tabs[3]));
+
+            // Bind Save/Load Quotation Buttons
+            els.saveJsonBtn.addEventListener('click', saveQuotationJSON);
+            els.loadJsonBtn.addEventListener('click', loadQuotationJSON);
+            els.jsonFileInput.addEventListener('change', handleJsonFileLoad);
 
             // Bind Export Buttons
             els.exportXlsxBtn.addEventListener('click', exportToXLSX);
