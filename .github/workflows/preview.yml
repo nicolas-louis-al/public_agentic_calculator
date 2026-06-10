@@ -6,6 +6,11 @@ on:
 
 concurrency: preview-${{ github.ref }}
 
+permissions:
+  contents: read
+  pull-requests: write
+  pages: write
+
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
@@ -23,7 +28,7 @@ jobs:
       - name: Deploy preview
         uses: rossjrw/pr-preview-action@v1
         with:
-          source-dir: ./dist/   # or ./build/ depending on your SPA
+          source-dir: ./build/
           preview-branch: gh-pages
           qr-code: true
-          comment: true              # ← ENABLE COMMENT BOT
+          comment: true
