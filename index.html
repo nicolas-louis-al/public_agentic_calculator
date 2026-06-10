@@ -122,6 +122,9 @@
             <button id="tabDataBtn" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-semibold transition-colors flex items-center gap-2">
                 <i class="fa-solid fa-database"></i> Reference Data
             </button>
+            <button id="tabAboutBtn" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-semibold transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-circle-info"></i> About
+            </button>
         </div>
 
         <!-- CALCULATOR VIEW -->
@@ -544,6 +547,28 @@
             </section>
         </div>
 
+        <!-- ABOUT VIEW -->
+        <div id="viewAbout" style="display: none;" class="space-y-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-2xl mx-auto text-center">
+                <div class="flex justify-center mb-6">
+                    <div class="p-4 bg-blue-50 text-blue-600 rounded-full">
+                        <i class="fa-solid fa-circle-info text-4xl"></i>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">About the Estimator</h2>
+                <p class="text-lg text-slate-600 leading-relaxed mb-8">
+                    This solution is the result of the innovation of the <span class="font-bold text-blue-600">Air Liquide Digital & IT</span>.
+                    It was designed to help teams navigate the financial complexities of agentic software development workflows.
+                </p>
+                <div class="pt-8 border-t border-slate-100">
+                    <p class="text-sm text-slate-500 mb-2">For any questions or feedback, please contact:</p>
+                    <a href="mailto:nicolas.louis@airliquide.com" class="text-blue-600 font-bold hover:underline flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-envelope"></i> nicolas.louis@airliquide.com
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Referential Data -->
@@ -701,7 +726,9 @@
             viewCalc: document.getElementById('viewCalc'),
             viewData: document.getElementById('viewData'),
             viewHelp: document.getElementById('viewHelp'),
+            viewAbout: document.getElementById('viewAbout'),
 
+            tabAboutBtn: document.getElementById('tabAboutBtn'),
             exportXlsxBtn: document.getElementById('exportXlsxBtn'),
             exportPdfBtn: document.getElementById('exportPdfBtn'),
         };
@@ -1324,7 +1351,8 @@
             const tabs = [
                 { btn: els.tabCalcBtn, view: els.viewCalc },
                 { btn: els.tabHelpBtn, view: els.viewHelp },
-                { btn: els.tabDataBtn, view: els.viewData }
+                { btn: els.tabDataBtn, view: els.viewData },
+                { btn: els.tabAboutBtn, view: els.viewAbout }
             ];
 
             const switchTab = (activeTab) => {
@@ -1345,6 +1373,7 @@
             els.tabCalcBtn.addEventListener('click', () => switchTab(tabs[0]));
             els.tabHelpBtn.addEventListener('click', () => switchTab(tabs[1]));
             els.tabDataBtn.addEventListener('click', () => switchTab(tabs[2]));
+            els.tabAboutBtn.addEventListener('click', () => switchTab(tabs[3]));
 
             // Bind Export Buttons
             els.exportXlsxBtn.addEventListener('click', exportToXLSX);
