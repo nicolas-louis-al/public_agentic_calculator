@@ -73,6 +73,35 @@
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
             transition: all 0.2s ease-in-out;
         }
+        /* Collapsible Card Styles */
+        .collapsible-card-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .collapsible-card-header:hover {
+            background-color: #f8fafc;
+        }
+        .collapsible-chevron {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .collapsible-chevron.rotated {
+            transform: rotate(-180deg);
+        }
+        .collapsible-content {
+            max-height: 9999px;
+            opacity: 1;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900 font-sans p-4 md:p-8">
@@ -301,16 +330,21 @@
                 </div>
             </div>
 
-            <!-- 2. Work Breakdown Structure (WBS) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-center">
-                    <div>
+            <!-- 2. Work Breakdown Structure (WBS) - Collapsible -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" data-collapsible-card="wbs">
+                <div class="collapsible-card-header bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-center" role="button" tabindex="0" aria-expanded="true">
+                    <div class="flex-1">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-layer-group text-purple-500"></i> Task Selection (WBS)
                         </h2>
                         <p class="text-xs text-slate-500 mt-1">Check tasks to include. Configure quantity (for features & PRs) and optimize the model per task.</p>
                     </div>
+                    <div class="ml-4 flex-shrink-0">
+                        <i class="fa-solid fa-chevron-down collapsible-chevron text-slate-400 text-lg"></i>
+                    </div>
                 </div>
+                
+                <div class="collapsible-content">
 
                 <!-- Table Header -->
                 <div class="hidden lg:grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase tracking-wider px-6 py-3 bg-slate-100 border-b border-slate-200">
@@ -324,6 +358,7 @@
                 <!-- WBS Rows Container -->
                 <div id="wbsContainer" class="divide-y divide-slate-100 p-2 space-y-2 lg:space-y-0 lg:p-0">
                     <!-- Rows injected by JS -->
+                </div>
                 </div>
             </div>
 
@@ -1672,6 +1707,77 @@
             doc.save(`${quotationName}.pdf`);
         }
 
+        // --- COLLAPSIBLE CARDS ---
+        function initializeCollapsibleCards() {
+            const CARD_STATES_KEY = 'cardCollapsibleStates';
+            
+            // Load persisted states from localStorage
+            let cardStates = JSON.parse(localStorage.getItem(CARD_STATES_KEY) || '{}');
+            
+            // Default states: WBS collapsed, others open (only WBS is collapsible for now)
+            const defaultStates = {
+                wbs: false // false = collapsed, true = expanded
+            };
+            
+            // Merge saved states with defaults
+            cardStates = { ...defaultStates, ...cardStates };
+            
+            // Apply initial states
+            Object.entries(cardStates).forEach(([cardId, isExpanded]) => {
+                const cardEl = document.querySelector(`[data-collapsible-card="${cardId}"]`);
+                if (!cardEl) return;
+                
+                const header = cardEl.querySelector('.collapsible-card-header');
+                const content = cardEl.querySelector('.collapsible-content');
+                const chevron = header.querySelector('.collapsible-chevron');
+                
+                if (!isExpanded) {
+                    content.classList.add('collapsed');
+                    chevron.classList.add('rotated');
+                    header.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Attach click handlers to all collapsible headers
+            document.querySelectorAll('.collapsible-card-header').forEach(header => {
+                const toggleCard = () => {
+                    const card = header.closest('[data-collapsible-card]');
+                    const cardId = card.dataset.collapsibleCard;
+                    const content = card.querySelector('.collapsible-content');
+                    const chevron = header.querySelector('.collapsible-chevron');
+                    
+                    const isCurrentlyCollapsed = content.classList.contains('collapsed');
+                    
+                    if (isCurrentlyCollapsed) {
+                        // Expand
+                        content.classList.remove('collapsed');
+                        chevron.classList.remove('rotated');
+                        header.setAttribute('aria-expanded', 'true');
+                        cardStates[cardId] = true;
+                    } else {
+                        // Collapse
+                        content.classList.add('collapsed');
+                        chevron.classList.add('rotated');
+                        header.setAttribute('aria-expanded', 'false');
+                        cardStates[cardId] = false;
+                    }
+                    
+                    // Persist state
+                    localStorage.setItem(CARD_STATES_KEY, JSON.stringify(cardStates));
+                };
+                
+                header.addEventListener('click', toggleCard);
+                
+                // Keyboard support: Enter or Space
+                header.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleCard();
+                    }
+                });
+            });
+        }
+
         // --- INITIALIZATION ---
         function initializeApp() {
             const tabs = [
@@ -1709,6 +1815,9 @@
             // Bind Export Buttons
             els.exportXlsxBtn.addEventListener('click', exportToXLSX);
             els.exportPdfBtn.addEventListener('click', exportToPDF);
+
+            // Initialize Collapsible Cards
+            initializeCollapsibleCards();
 
             // Bind the Export JSON button
             const exportBtn = document.getElementById('exportJsonBtn');
