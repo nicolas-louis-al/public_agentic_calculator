@@ -382,23 +382,23 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
                 
                 <!-- Primary Cost Display -->
-                <div class="lg:col-span-5 bg-slate-900 rounded-3xl shadow-xl overflow-hidden relative">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
+                <div class="lg:col-span-5 bg-white rounded-3xl shadow-2xl overflow-hidden relative border border-slate-200">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
                     <div class="p-8">
-                        <h3 class="text-slate-400 font-medium tracking-wide uppercase text-sm mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-dollar-to-slot"></i> Global Sprint Estimate
+                        <h3 class="text-slate-500 font-semibold tracking-wide uppercase text-xs mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-dollar-to-slot text-blue-600"></i> Global Sprint Estimate
                         </h3>
                         <!-- Notice: Cents added back here -->
-                        <div class="flex items-baseline gap-2 mb-2">
-                            <span class="text-5xl md:text-6xl font-black text-white tracking-tighter" id="totalCostDollars">$0</span>
-                            <span class="text-2xl font-bold text-slate-400" id="totalCostCents">.00</span>
+                        <div class="flex items-baseline gap-2 mb-3">
+                            <span class="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter" id="totalCostDollars">$0</span>
+                            <span class="text-2xl font-bold text-slate-500" id="totalCostCents">.00</span>
                         </div>
-                        <div class="text-slate-400 text-sm font-medium mb-6">
-                            Estimated Range: <span class="text-emerald-400" id="costRangeLow">$0</span> - <span class="text-red-400" id="costRangeHigh">$0</span>
+                        <div class="text-slate-600 text-sm font-medium mb-6">
+                            Estimated Range: <span class="text-emerald-600 font-semibold" id="costRangeLow">$0</span> - <span class="text-rose-600 font-semibold" id="costRangeHigh">$0</span>
                         </div>
-                        <div class="pt-6 border-t border-slate-800">
-                            <p class="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Total Gross Tokens Analyzed</p>
-                            <p class="text-2xl font-semibold text-slate-100" id="grossTokensDisplay">0</p>
+                        <div class="pt-6 border-t border-slate-200">
+                            <p class="text-slate-500 text-xs uppercase font-bold tracking-wider mb-2">Total Gross Tokens Analyzed</p>
+                            <p class="text-2xl font-semibold text-slate-800" id="grossTokensDisplay">0</p>
                         </div>
                     </div>
                 </div>
