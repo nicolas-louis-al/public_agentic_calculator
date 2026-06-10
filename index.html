@@ -1141,29 +1141,47 @@
                 ["Output Cost", totalsFormatter.format(gTotals.outputCost)]
             ];
 
-            // 2. WBS Breakdown Sheet
-            const wbsHeader = [
-                "Included", "Operation", "Scope", "Quantity", "Base LOC", "Model", "Multiplier", "Cache Rate", "Gross Tokens", "Estimated Cost"
+            // 2. Quotation Sheet (Filtered)
+            const quoteHeader = [
+                "Operation", "Scope", "Quantity", "Base LOC", "Model", "Multiplier", "Cache Rate", "Gross Tokens", "Estimated Cost"
             ];
-            const wbsRows = taskDetails.map(d => [
-                d.state.selected ? "YES" : "NO",
-                d.task.name,
-                d.task.scope === 'repo' ? "Entire Repo" : "Feature Scoped",
-                d.task.hasQuantity ? d.state.quantity : "-",
-                d.taskFootprintLoc.toLocaleString(),
-                d.model.name,
-                `${d.task.multiplier}x`,
-                `${d.state.cacheRate}%`,
-                Math.round(d.grossTokens).toLocaleString(),
-                totalsFormatter.format(d.rowTotalCost)
-            ]);
+            const quoteRows = taskDetails
+                .filter(d => d.state.selected)
+                .map(d => [
+                    d.task.name,
+                    d.task.scope === 'repo' ? "Entire Repo" : "Feature Scoped",
+                    d.task.hasQuantity ? d.state.quantity : "-",
+                    d.taskFootprintLoc.toLocaleString(),
+                    d.model.name,
+                    `${d.task.multiplier}x`,
+                    `${d.state.cacheRate}%`,
+                    Math.round(d.grossTokens).toLocaleString(),
+                    totalsFormatter.format(d.rowTotalCost)
+                ]);
+
+            // 3. Reference Data Sheet (Appendice)
+            const refData = [
+                ["Models Reference"],
+                ["ID", "Name", "Tier", "Input ($/1M)", "Cached ($/1M)", "Output ($/1M)", "Deprecated"],
+                ...MODELS.map(m => [m.id, m.name, m.tier, m.input, m.cached, m.output, m.deprecated ? "YES" : "NO"]),
+                [],
+                ["Workflow Tasks Reference"],
+                ["ID", "Name", "Scope", "Multiplier", "Output %", "Cached Ratio %", "Brownfield Only"],
+                ...TASKS.map(t => [t.id, t.name, t.scope, t.multiplier, Math.round(t.profile.output * 100), Math.round(t.profile.cachedRatio * 100), t.onlyBrownfield ? "YES" : "NO"]),
+                [],
+                ["Languages Reference"],
+                ["ID", "Name", "Density (tkns/line)"],
+                ...LANGUAGES.map(l => [l.id, l.name, l.density])
+            ];
 
             const wb = XLSX.utils.book_new();
             const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-            const wsWBS = XLSX.utils.aoa_to_sheet([wbsHeader, ...wbsRows]);
+            const wsQuote = XLSX.utils.aoa_to_sheet([quoteHeader, ...quoteRows]);
+            const wsRef = XLSX.utils.aoa_to_sheet(refData);
 
             XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-            XLSX.utils.book_append_sheet(wb, wsWBS, "WBS Breakdown");
+            XLSX.utils.book_append_sheet(wb, wsQuote, "Quotation");
+            XLSX.utils.book_append_sheet(wb, wsRef, "Reference Data");
 
             XLSX.writeFile(wb, "agentic_cost_estimate.xlsx");
         }
@@ -1226,13 +1244,19 @@
                 styles: { fontSize: 10 }
             });
 
-            // WBS Breakdown
+            // Appendices
             doc.addPage();
-            doc.setFontSize(14);
-            doc.text("Detailed Work Breakdown Structure (WBS)", 14, 22);
+            doc.setFontSize(18);
+            doc.setTextColor(37, 99, 235);
+            doc.text("Appendices", 14, 22);
 
-            const wbsHeader = [["Task", "Scope", "Qty", "Model", "Tokens", "Cost"]];
-            const wbsRows = taskDetails
+            // Appendix I: Quotation
+            doc.setFontSize(14);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Appendix I: Quotation", 14, 35);
+
+            const quoteHeader = [["Task", "Scope", "Qty", "Model", "Tokens", "Cost"]];
+            const quoteRows = taskDetails
                 .filter(d => d.state.selected)
                 .map(d => [
                     d.task.name,
@@ -1244,12 +1268,52 @@
                 ]);
 
             doc.autoTable({
-                startY: 28,
-                head: wbsHeader,
-                body: wbsRows,
+                startY: 40,
+                head: quoteHeader,
+                body: quoteRows,
                 theme: 'grid',
                 headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
                 styles: { fontSize: 9 }
+            });
+
+            // Appendix II: Reference Data
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Appendix II: Reference Data", 14, 22);
+
+            // Models Table
+            doc.setFontSize(11);
+            doc.text("Models Reference", 14, 32);
+            doc.autoTable({
+                startY: 35,
+                head: [["Name", "Tier", "Input", "Cached", "Output"]],
+                body: MODELS.map(m => [m.name, m.tier, m.input, m.cached, m.output]),
+                theme: 'striped',
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [71, 85, 105] }
+            });
+
+            // Tasks Table
+            doc.text("Workflow Tasks Reference", 14, doc.lastAutoTable.finalY + 10);
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 13,
+                head: [["Name", "Scope", "Mult.", "Out %", "Cache %"]],
+                body: TASKS.map(t => [t.name, t.scope, t.multiplier, Math.round(t.profile.output * 100) + '%', Math.round(t.profile.cachedRatio * 100) + '%']),
+                theme: 'striped',
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [71, 85, 105] }
+            });
+
+            // Languages Table
+            doc.text("Languages Reference", 14, doc.lastAutoTable.finalY + 10);
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 13,
+                head: [["Name", "Density (tkns/line)"]],
+                body: LANGUAGES.map(l => [l.name, l.density]),
+                theme: 'striped',
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [71, 85, 105] }
             });
 
             doc.save("agentic_cost_estimate.pdf");

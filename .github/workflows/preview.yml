@@ -1,0 +1,81 @@
+name: Deploy PR previews
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+concurrency: preview-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  pages: write
+
+jobs:
+  cleanup-old:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Remove old pr-preview folder
+        run: |
+          if [ -d "pr-preview" ]; then
+            rm -rf pr-preview
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add -A
+            git commit -m "Cleanup: remove old pr-preview folder structure" || echo "No changes to commit"
+            git push
+          fi
+        shell: bash
+
+  deploy-preview:
+    needs: cleanup-old
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install and Build
+        if: github.event.action != 'closed'
+        run: |
+          npm install
+          npm run build
+          touch build/.nojekyll
+
+      - name: Deploy to GitHub Pages
+        if: github.event.action != 'closed'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: build
+          target-folder: pr-${{ github.event.number }}
+          clean-exclude: |
+            pr-*
+          force: true
+
+      - name: Comment PR with preview URL
+        if: github.event.action != 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const preview_url = `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 **Preview URL**: [${preview_url}](${preview_url})`
+            });
+
+      - name: Close preview on PR close
+        if: github.event.action == 'closed'
+        run: |
+          # This step is optional - previews can remain or be deleted
+          # To delete: push an empty commit or manually remove the pr-* folder from gh-pages branch
+          echo "PR closed - preview at pr-${{ github.event.number }}/ can be manually removed if needed"
