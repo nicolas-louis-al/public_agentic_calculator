@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Cost Estimator v1.8</title>
+    <title>Agentic Cost Estimator v1.9</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -115,7 +115,7 @@
                         <i class="fa-solid fa-calculator text-white text-xl"></i>
                     </div>
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v1.8</span>
+                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v1.9</span>
                     </h1>
                 </div>
                 
@@ -219,9 +219,7 @@
                 <div class="collapsible-content">
                 <div class="p-6">
                 <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center mb-6">
-                    <div class="w-full lg:w-1/3">
-
-                    <div class="w-full lg:w-1/3 flex gap-4 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <div class="w-full lg:w-1/2 flex gap-4 bg-slate-50 p-2 rounded-xl border border-slate-200">
                         <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer bg-white py-2 px-3 rounded-lg shadow-sm border border-slate-200 transition-all">
                             <input type="radio" name="projectType" value="brownfield" id="typeBrownfield" checked class="text-blue-600 focus:ring-blue-500">
                             <span class="font-bold text-sm text-slate-700">Brownfield</span>
@@ -232,7 +230,7 @@
                         </label>
                     </div>
 
-                    <div class="w-full lg:w-1/3">
+                    <div class="w-full lg:w-1/2">
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Primary Language</label>
                         <div class="relative">
                             <i class="fa-regular fa-file-code absolute left-3 top-3 text-slate-400"></i>
@@ -658,15 +656,31 @@
 
                 <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
 
-                    <!-- v1.8 -->
+                    <!-- v1.9 -->
                     <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">UX & Responsiveness Refinement</div>
+                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v1.9</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Optimized Project Context layout for better desktop visibility. Primary Language and Project Type selectors now utilize 50% width on larger screens. Fixed nested container constraints and improved mobile stacking behavior.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v1.8 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
                         <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                             <i class="fa-solid fa-arrow-down-up text-xs"></i>
                         </div>
                         <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
                             <div class="flex items-center justify-between space-x-2 mb-1">
                                 <div class="font-bold text-slate-800">Collapsible Cards</div>
-                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v1.8</time>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v1.8</time>
                             </div>
                             <div class="text-slate-500 text-xs leading-relaxed">
                                 Task Selection (WBS) and Project Context cards now collapsible with smooth animations. Both expanded by default. State persists across page reloads via localStorage. Keyboard accessible (Enter/Space). Cost Summary & Token Expenditure always visible. Removed duplicate export buttons.
