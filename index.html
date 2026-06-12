@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Cost Estimator v1.9</title>
+    <title>Agentic Cost Estimator v2.0</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -115,7 +115,7 @@
                         <i class="fa-solid fa-calculator text-white text-xl"></i>
                     </div>
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v1.9</span>
+                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v2.0</span>
                     </h1>
                 </div>
                 
@@ -343,13 +343,19 @@
 
             <!-- 2. Work Breakdown Structure (WBS) - Collapsible -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" data-collapsible-card="wbs">
-                <div class="collapsible-card-header bg-slate-50 p-6 border-b border-slate-200 flex justify-between items-center" role="button" tabindex="0" aria-expanded="true">
+                <div class="collapsible-card-header bg-slate-50 p-6 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" role="button" tabindex="0" aria-expanded="true">
                     <div class="flex-1">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-layer-group text-purple-500"></i> Task Selection (WBS)
                         </h2>
-                        <p class="text-xs text-slate-500 mt-1">Check tasks to include. Configure quantity (for features & PRs) and optimize the model per task.</p>
+                        <p class="text-xs text-slate-500 mt-1">Check tasks to include. Configure quantity (for features & PRs) or allocation % and optimize the model per task.</p>
                     </div>
+
+                    <div class="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm self-start md:self-auto" onclick="event.stopPropagation()">
+                        <button id="wbsModeStandard" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm">Standard</button>
+                        <button id="wbsModeProrata" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:bg-slate-50">Prorata</button>
+                    </div>
+
                     <div class="ml-4 flex-shrink-0">
                         <i class="fa-solid fa-chevron-down collapsible-chevron text-slate-400 text-lg"></i>
                     </div>
@@ -357,11 +363,31 @@
                 
                 <div class="collapsible-content">
 
+                <!-- Prorata Configuration Bar -->
+                <div id="prorataConfig" class="hidden bg-indigo-50/50 border-b border-indigo-100 p-4 flex flex-wrap items-center gap-6">
+                    <div class="flex items-center gap-3">
+                        <label class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Total Scope LOC:</label>
+                        <div class="relative">
+                            <input type="number" id="prorataLocInput" value="50000" class="pl-3 pr-8 py-1.5 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold text-slate-700 w-32">
+                            <span class="absolute right-3 top-2 text-[10px] text-indigo-400 font-bold">LOC</span>
+                        </div>
+                        <button id="syncProrataBtn" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors" title="Sync from Project Context projected size">
+                            <i class="fa-solid fa-rotate"></i> Sync from Project
+                        </button>
+                    </div>
+                    <div class="h-8 w-px bg-indigo-200 hidden md:block"></div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Total Allocation:</span>
+                        <span id="totalAllocationBadge" class="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-700 font-black rounded-lg text-sm shadow-sm">0%</span>
+                    </div>
+                    <p class="text-[10px] text-indigo-500/80 italic w-full lg:w-auto">In Prorata mode, each task takes a % of the Total Scope LOC instead of fixed quantities.</p>
+                </div>
+
                 <!-- Table Header -->
                 <div class="hidden lg:grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase tracking-wider px-6 py-3 bg-slate-100 border-b border-slate-200">
                     <div class="col-span-1 text-center">Include</div>
                     <div class="col-span-4">Agentic Operation</div>
-                    <div class="col-span-2 text-center">Scope / Quantity</div>
+                    <div id="wbsQtyHeader" class="col-span-2 text-center">Scope / Quantity</div>
                     <div class="col-span-3">Model Selection & Cache</div>
                     <div class="col-span-2 text-right">Task Cost</div>
                 </div>
@@ -656,15 +682,31 @@
 
                 <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
 
-                    <!-- v1.9 -->
+                    <!-- v2.0 -->
                     <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-percent text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">Prorata Estimation Mode</div>
+                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v2.0</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Introduced a new "Prorata" mode for WBS tokens estimation. Users can now define a Total Scope LOC and allocate percentages to each task, rather than just using fixed quantities. Includes a "Sync from Project" feature to align Prorata scope with projected repository size.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v1.9 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
                         <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                             <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
                         </div>
                         <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
                             <div class="flex items-center justify-between space-x-2 mb-1">
                                 <div class="font-bold text-slate-800">UX & Responsiveness Refinement</div>
-                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v1.9</time>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v1.9</time>
                             </div>
                             <div class="text-slate-500 text-xs leading-relaxed">
                                 Optimized Project Context layout for better desktop visibility. Primary Language and Project Type selectors now utilize 50% width on larger screens. Fixed nested container constraints and improved mobile stacking behavior.
@@ -833,6 +875,8 @@
         // --- APPLICATION STATE ---
         const REPORT_DISCLAIMER = "Estimations are provided as-is, and are used under responsibility of the one who uses it. The responsibility of Air Liquide and its affiliates cannot be engaged.";
         const wbsState = {};
+        let wbsMode = 'standard'; // 'standard' or 'prorata'
+        let prorataTotalLoc = 50000;
         let currentProjectType = 'brownfield';
         let currentCurrency = { code: 'USD', symbol: '$', rate: 1.0 };
         
@@ -897,6 +941,7 @@
             wbsState[t.id] = {
                 selected: (t.id === 'feature_dev_m'), // Default selected task
                 quantity: 1,
+                percentage: t.scope === 'repo' ? 100 : 10,
                 modelId: sortList[0].id,
                 cacheRate: t.profile.cachedRatio * 100
             };
@@ -987,6 +1032,14 @@
             jsonFileInput: document.getElementById('jsonFileInput'),
             exportXlsxBtn: document.getElementById('exportXlsxBtn'),
             exportPdfBtn: document.getElementById('exportPdfBtn'),
+
+            wbsModeStandard: document.getElementById('wbsModeStandard'),
+            wbsModeProrata: document.getElementById('wbsModeProrata'),
+            prorataConfig: document.getElementById('prorataConfig'),
+            prorataLocInput: document.getElementById('prorataLocInput'),
+            syncProrataBtn: document.getElementById('syncProrataBtn'),
+            totalAllocationBadge: document.getElementById('totalAllocationBadge'),
+            wbsQtyHeader: document.getElementById('wbsQtyHeader'),
         };
 
         // --- CORE LOGIC ---
@@ -1151,6 +1204,15 @@
         }
 
         function renderWBSTable() {
+            // Update Header
+            if (wbsMode === 'prorata') {
+                els.wbsQtyHeader.textContent = "Scope / % Allocation";
+                els.prorataConfig.classList.remove('hidden');
+            } else {
+                els.wbsQtyHeader.textContent = "Scope / Quantity";
+                els.prorataConfig.classList.add('hidden');
+            }
+
             els.wbsContainer.innerHTML = TASKS
             .filter(t => !t.onlyBrownfield || currentProjectType === 'brownfield')
             .map(t => {
@@ -1159,10 +1221,20 @@
                 const isChecked = s.selected ? 'checked' : '';
                 
                 let qtyHtml = '';
-                if (t.hasQuantity) {
-                    qtyHtml = `<div class="flex flex-col items-center gap-1"><div class="flex items-center gap-1"><input type="number" min="1" max="1000" value="${s.quantity}" class="qty-input w-16 border border-slate-300 rounded p-1 text-sm text-center" data-id="${t.id}"> <span class="text-[10px] text-slate-500 uppercase font-bold">${t.unit}</span></div><span class="text-[9px] text-blue-500 font-bold bg-blue-50 px-1.5 rounded">~${(t.baseLoc * s.quantity).toLocaleString()} LOC</span></div>`;
-                } else if (t.scope === 'repo') {
-                    qtyHtml = `<span class="text-[10px] text-purple-600 bg-purple-50 px-2 py-1 rounded uppercase font-bold">Entire Repo</span>`;
+                if (wbsMode === 'prorata') {
+                    qtyHtml = `<div class="flex flex-col items-center gap-1">
+                        <div class="flex items-center gap-1">
+                            <input type="number" min="0" max="100" value="${s.percentage}" class="pct-allocation-input w-16 border border-slate-300 rounded p-1 text-sm text-center font-bold text-indigo-600" data-id="${t.id}">
+                            <span class="text-[10px] text-indigo-500 uppercase font-bold">%</span>
+                        </div>
+                        <span class="text-[9px] text-indigo-400 font-bold bg-indigo-50 px-1.5 rounded">~${Math.round(prorataTotalLoc * (s.percentage/100)).toLocaleString()} LOC</span>
+                    </div>`;
+                } else {
+                    if (t.hasQuantity) {
+                        qtyHtml = `<div class="flex flex-col items-center gap-1"><div class="flex items-center gap-1"><input type="number" min="1" max="1000" value="${s.quantity}" class="qty-input w-16 border border-slate-300 rounded p-1 text-sm text-center" data-id="${t.id}"> <span class="text-[10px] text-slate-500 uppercase font-bold">${t.unit}</span></div><span class="text-[9px] text-blue-500 font-bold bg-blue-50 px-1.5 rounded">~${(t.baseLoc * s.quantity).toLocaleString()} LOC</span></div>`;
+                    } else if (t.scope === 'repo') {
+                        qtyHtml = `<span class="text-[10px] text-purple-600 bg-purple-50 px-2 py-1 rounded uppercase font-bold">Entire Repo</span>`;
+                    }
                 }
 
                 return `
@@ -1244,6 +1316,19 @@
                     calculateGlobalCosts();
                 });
             });
+
+            document.querySelectorAll('.pct-allocation-input').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    const id = e.target.dataset.id;
+                    wbsState[id].percentage = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+
+                    // Update LOC display label locally
+                    const lbl = el.parentElement.parentElement.querySelector('span.text-indigo-400');
+                    if(lbl) lbl.textContent = `~${Math.round(prorataTotalLoc * (wbsState[id].percentage/100)).toLocaleString()} LOC`;
+
+                    calculateGlobalCosts();
+                });
+            });
         }
 
         function getCalculatedData() {
@@ -1253,7 +1338,11 @@
             let totalFeatureLocGenerated = 0;
             TASKS.forEach(t => {
                 if (t.scope === 'feature' && t.id.startsWith('feature_dev_') && wbsState[t.id].selected) {
-                    totalFeatureLocGenerated += (t.baseLoc * wbsState[t.id].quantity);
+                    if (wbsMode === 'prorata') {
+                        totalFeatureLocGenerated += (prorataTotalLoc * (wbsState[t.id].percentage / 100));
+                    } else {
+                        totalFeatureLocGenerated += (t.baseLoc * wbsState[t.id].quantity);
+                    }
                 }
             });
 
@@ -1282,10 +1371,14 @@
                 const model = MODELS.find(m => m.id === s.modelId);
                 
                 let taskFootprintLoc = 0;
-                if (t.scope === 'repo') {
-                    taskFootprintLoc = totalRepoLoc;
-                } else if (t.scope === 'feature') {
-                    taskFootprintLoc = t.baseLoc * s.quantity;
+                if (wbsMode === 'prorata') {
+                    taskFootprintLoc = prorataTotalLoc * (s.percentage / 100);
+                } else {
+                    if (t.scope === 'repo') {
+                        taskFootprintLoc = totalRepoLoc;
+                    } else if (t.scope === 'feature') {
+                        taskFootprintLoc = t.baseLoc * s.quantity;
+                    }
                 }
                 
                 const baseTokens = taskFootprintLoc * lang.density;
@@ -1341,6 +1434,22 @@
             const data = getCalculatedData();
             const { gTotals, taskDetails, totalRepoLoc } = data;
             const totalsFormatter = getTotalsFormatter();
+
+            // Update Total Allocation Badge
+            let totalAllocatedPct = 0;
+            TASKS.forEach(t => {
+                if (wbsState[t.id].selected) {
+                    totalAllocatedPct += wbsState[t.id].percentage;
+                }
+            });
+            els.totalAllocationBadge.textContent = `${totalAllocatedPct}%`;
+            if (totalAllocatedPct > 100) {
+                els.totalAllocationBadge.className = "px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 font-black rounded-lg text-sm shadow-sm";
+            } else if (totalAllocatedPct === 100) {
+                els.totalAllocationBadge.className = "px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 font-black rounded-lg text-sm shadow-sm";
+            } else {
+                els.totalAllocationBadge.className = "px-2.5 py-1 bg-white border border-indigo-200 text-indigo-700 font-black rounded-lg text-sm shadow-sm";
+            }
 
             els.projectedTotalLoc.textContent = `${Math.round(totalRepoLoc).toLocaleString()} LOC`;
 
@@ -1402,6 +1511,8 @@
                 name: quotationName,
                 state: {
                     wbsState,
+                    wbsMode,
+                    prorataTotalLoc,
                     currentProjectType,
                     impactState,
                     currentCurrency: {
@@ -1452,6 +1563,8 @@
                     
                     // Restore application state
                     Object.assign(wbsState, loadedData.state.wbsState);
+                    wbsMode = loadedData.state.wbsMode || 'standard';
+                    prorataTotalLoc = loadedData.state.prorataTotalLoc || 50000;
                     currentProjectType = loadedData.state.currentProjectType;
                     Object.assign(impactState, loadedData.state.impactState);
                     
@@ -1466,6 +1579,13 @@
                     }
                     
                     // UI sync
+                    if (wbsMode === 'prorata') {
+                        els.wbsModeProrata.click();
+                    } else {
+                        els.wbsModeStandard.click();
+                    }
+                    els.prorataLocInput.value = prorataTotalLoc;
+
                     if (currentProjectType === 'greenfield') {
                         els.typeGreenfield.checked = true;
                     } else {
@@ -1509,6 +1629,8 @@
                 ["Project Type", currentProjectType.toUpperCase()],
                 ["Primary Language", lang.name],
                 ["Language Density", `${lang.density} tokens/line`],
+                ["Estimation Mode", wbsMode.toUpperCase()],
+                ["Prorata Total Scope", wbsMode === 'prorata' ? `${prorataTotalLoc.toLocaleString()} LOC` : "N/A"],
                 ["Projected Total Repo Size", `${Math.round(totalRepoLoc).toLocaleString()} LOC`],
                 ["Codebase Friction", `${frictionFactor}x`],
                 ["Currency", `${currentCurrency.code} (${currentCurrency.symbol})`],
@@ -1530,14 +1652,14 @@
 
             // 2. Quotation Sheet (Filtered)
             const quoteHeader = [
-                "Operation", "Scope", "Quantity", "Base LOC", "Model", "Multiplier", "Cache Rate", "Gross Tokens", "Estimated Cost"
+                "Operation", "Scope", wbsMode === 'prorata' ? "Allocation %" : "Quantity", "Base LOC", "Model", "Multiplier", "Cache Rate", "Gross Tokens", "Estimated Cost"
             ];
             const quoteRows = taskDetails
                 .filter(d => d.state.selected)
                 .map(d => [
                     d.task.name,
                     d.task.scope === 'repo' ? "Entire Repo" : "Feature Scoped",
-                    d.task.hasQuantity ? d.state.quantity : "-",
+                    wbsMode === 'prorata' ? `${d.state.percentage}%` : (d.task.hasQuantity ? d.state.quantity : "-"),
                     d.taskFootprintLoc.toLocaleString(),
                     d.model.name,
                     `${d.task.multiplier}x`,
@@ -1607,6 +1729,8 @@
 
             const metaData = [
                 ["Project Type", currentProjectType.toUpperCase()],
+                ["Estimation Mode", wbsMode.toUpperCase()],
+                ["Prorata Total Scope", wbsMode === 'prorata' ? `${prorataTotalLoc.toLocaleString()} LOC` : "N/A"],
                 ["Primary Language", lang.name],
                 ["Language Density", `${lang.density} tokens/line`],
                 ["Projected Total Repo Size", `${Math.round(totalRepoLoc).toLocaleString()} LOC`],
@@ -1653,13 +1777,20 @@
             doc.setTextColor(30, 41, 59);
             doc.text("Appendix I: Quotation", 14, 35);
 
-            const quoteHeader = [["Task", "Scope", "Qty", "Model", "Tokens", "Cost"]];
+            const quoteHeader = [[
+                "Task",
+                "Scope",
+                wbsMode === 'prorata' ? "%" : "Qty",
+                "Model",
+                "Tokens",
+                "Cost"
+            ]];
             const quoteRows = taskDetails
                 .filter(d => d.state.selected)
                 .map(d => [
                     d.task.name,
                     d.task.scope === 'repo' ? "Repo" : "Feature",
-                    d.task.hasQuantity ? d.state.quantity : "-",
+                    wbsMode === 'prorata' ? `${d.state.percentage}%` : (d.task.hasQuantity ? d.state.quantity : "-"),
                     d.model.name,
                     formatTokens(d.grossTokens),
                     totalsFormatter.format(d.rowTotalCost)
@@ -2073,6 +2204,36 @@
             // Global Listeners for Repo level
             els.locInput.addEventListener('input', calculateGlobalCosts);
             els.langSelect.addEventListener('change', calculateGlobalCosts);
+
+            // WBS Mode Toggle Listeners
+            els.wbsModeStandard.addEventListener('click', () => {
+                wbsMode = 'standard';
+                els.wbsModeStandard.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-blue-600 text-white shadow-sm";
+                els.wbsModeProrata.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:bg-slate-50";
+                renderWBSTable();
+                calculateGlobalCosts();
+            });
+            els.wbsModeProrata.addEventListener('click', () => {
+                wbsMode = 'prorata';
+                els.wbsModeProrata.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm";
+                els.wbsModeStandard.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:bg-slate-50";
+                renderWBSTable();
+                calculateGlobalCosts();
+            });
+
+            // Prorata Config Listeners
+            els.prorataLocInput.addEventListener('input', (e) => {
+                prorataTotalLoc = Math.max(1, parseInt(e.target.value) || 1);
+                renderWBSTable();
+                calculateGlobalCosts();
+            });
+            els.syncProrataBtn.addEventListener('click', () => {
+                const data = getCalculatedData();
+                prorataTotalLoc = Math.round(data.totalRepoLoc);
+                els.prorataLocInput.value = prorataTotalLoc;
+                renderWBSTable();
+                calculateGlobalCosts();
+            });
 
             // Init custom slider drag logic
             initSliderDrag();
