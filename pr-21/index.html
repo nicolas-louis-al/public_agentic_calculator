@@ -371,9 +371,6 @@
                             <input type="number" id="prorataLocInput" value="50000" class="pl-3 pr-8 py-1.5 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold text-slate-700 w-32">
                             <span class="absolute right-3 top-2 text-[10px] text-indigo-400 font-bold">LOC</span>
                         </div>
-                        <button id="syncProrataBtn" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors" title="Sync from Project Context projected size">
-                            <i class="fa-solid fa-rotate"></i> Sync from Project
-                        </button>
                     </div>
                     <div class="h-8 w-px bg-indigo-200 hidden md:block"></div>
                     <div class="flex items-center gap-2">
@@ -693,7 +690,7 @@
                                 <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v2.0</time>
                             </div>
                             <div class="text-slate-500 text-xs leading-relaxed">
-                                Introduced a new "Prorata" mode for WBS tokens estimation. Users can now define a Total Scope LOC and allocate percentages to each task, rather than just using fixed quantities. Includes a "Sync from Project" feature to align Prorata scope with projected repository size.
+                                Introduced a new "Prorata" mode for WBS tokens estimation. Users can now define a Total Scope LOC and allocate percentages to each task, rather than just using fixed quantities.
                             </div>
                         </div>
                     </div>
@@ -938,10 +935,11 @@
             const sortList = nonDeprecated.length > 0 ? nonDeprecated : relevant;
             sortList.sort((a, b) => getBlendedCost(a) - getBlendedCost(b));
             
+            const isDefaultSelected = (t.id === 'feature_dev_m');
             wbsState[t.id] = {
-                selected: (t.id === 'feature_dev_m'), // Default selected task
+                selected: isDefaultSelected,
                 quantity: 1,
-                percentage: t.scope === 'repo' ? 100 : 10,
+                percentage: isDefaultSelected ? 100 : 0,
                 modelId: sortList[0].id,
                 cacheRate: t.profile.cachedRatio * 100
             };
@@ -1037,7 +1035,6 @@
             wbsModeProrata: document.getElementById('wbsModeProrata'),
             prorataConfig: document.getElementById('prorataConfig'),
             prorataLocInput: document.getElementById('prorataLocInput'),
-            syncProrataBtn: document.getElementById('syncProrataBtn'),
             totalAllocationBadge: document.getElementById('totalAllocationBadge'),
             wbsQtyHeader: document.getElementById('wbsQtyHeader'),
         };
@@ -1277,8 +1274,26 @@
                     const row = document.getElementById(`row_${id}`);
                     if(e.target.checked) {
                         row.classList.remove('inactive'); row.classList.add('active');
+
+                        // Prorata mode: automatic assignment of remaining %
+                        if (wbsMode === 'prorata') {
+                            let totalAllocated = 0;
+                            TASKS.forEach(t => {
+                                if (wbsState[t.id].selected && t.id !== id) {
+                                    totalAllocated += wbsState[t.id].percentage;
+                                }
+                            });
+                            wbsState[id].percentage = Math.max(0, 100 - totalAllocated);
+                            renderWBSTable(); // re-render to show updated percentage in input
+                        }
                     } else {
                         row.classList.remove('active'); row.classList.add('inactive');
+
+                        // Prorata mode: set to 0% when unselected
+                        if (wbsMode === 'prorata') {
+                            wbsState[id].percentage = 0;
+                            renderWBSTable();
+                        }
                     }
                     
                     if (id.startsWith('feature_dev_')) updatePRSuggestion();
@@ -1336,15 +1351,13 @@
             const frictionFactor = currentProjectType === 'greenfield' ? 1.0 : (parseFloat(els.frictionInput.value) || 1.0);
             
             let totalFeatureLocGenerated = 0;
-            TASKS.forEach(t => {
-                if (t.scope === 'feature' && t.id.startsWith('feature_dev_') && wbsState[t.id].selected) {
-                    if (wbsMode === 'prorata') {
-                        totalFeatureLocGenerated += (prorataTotalLoc * (wbsState[t.id].percentage / 100));
-                    } else {
+            if (wbsMode === 'standard') {
+                TASKS.forEach(t => {
+                    if (t.scope === 'feature' && t.id.startsWith('feature_dev_') && wbsState[t.id].selected) {
                         totalFeatureLocGenerated += (t.baseLoc * wbsState[t.id].quantity);
                     }
-                }
-            });
+                });
+            }
 
             let totalRepoLoc = 0;
             if (currentProjectType === 'greenfield') {
@@ -2224,13 +2237,6 @@
             // Prorata Config Listeners
             els.prorataLocInput.addEventListener('input', (e) => {
                 prorataTotalLoc = Math.max(1, parseInt(e.target.value) || 1);
-                renderWBSTable();
-                calculateGlobalCosts();
-            });
-            els.syncProrataBtn.addEventListener('click', () => {
-                const data = getCalculatedData();
-                prorataTotalLoc = Math.round(data.totalRepoLoc);
-                els.prorataLocInput.value = prorataTotalLoc;
                 renderWBSTable();
                 calculateGlobalCosts();
             });
