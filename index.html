@@ -102,6 +102,16 @@
             opacity: 0;
             pointer-events: none;
         }
+        /* Hide cost display grid when not on WBS Estimator tab */
+        #viewHelp ~ div,
+        #viewData ~ div,
+        #viewAbout ~ div {
+            /* This targets siblings after these views */
+        }
+        /* Use !important to ensure grid stays hidden outside Calc view */
+        #viewCalc[style*="display: none"] > .grid {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900 font-sans p-4 md:p-8">
@@ -1968,9 +1978,25 @@
                     if (tab.btn === activeTab.btn) {
                         tab.btn.className = "px-5 py-3 border-b-2 border-blue-600 text-blue-600 font-semibold transition-colors flex items-center gap-2";
                         tab.view.style.display = 'block';
+                        tab.view.style.visibility = 'visible';
                     } else {
                         tab.btn.className = "px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-semibold transition-colors flex items-center gap-2";
                         tab.view.style.display = 'none';
+                        tab.view.style.visibility = 'hidden';
+                    }
+                });
+
+                // Show/hide cost display grid (it's a sibling of viewCalc, not a child)
+                // Find the grid that contains "Global Sprint Estimate"
+                const costDisplayGrids = document.querySelectorAll('.grid.grid-cols-1.lg\\:grid-cols-12');
+                costDisplayGrids.forEach(grid => {
+                    const hasEstimate = grid.textContent.includes('Global Sprint Estimate');
+                    if (hasEstimate) {
+                        if (activeTab.btn === els.tabCalcBtn) {
+                            grid.style.display = 'grid';
+                        } else {
+                            grid.setAttribute('style', 'display: none !important;');
+                        }
                     }
                 });
             };
