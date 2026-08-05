@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Cost Estimator v2.0</title>
+    <title>Agentic Cost Estimator v2.2</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -112,9 +112,68 @@
         #viewCalc[style*="display: none"] > .grid {
             display: none !important;
         }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            transition: opacity 0.5s ease-in-out, visibility 0.5s;
+        }
+        #splash-screen.splash-hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .splash-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(0);
+            transition: transform 0.3s ease-out;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900 font-sans p-4 md:p-8">
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-card space-y-8">
+            <div class="flex justify-center">
+                <div class="relative">
+                    <div class="p-6 bg-blue-600 rounded-3xl shadow-xl shadow-blue-600/30">
+                        <i class="fa-solid fa-robot text-white text-5xl"></i>
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 p-3 bg-emerald-500 rounded-2xl border-4 border-white shadow-lg">
+                        <i class="fa-solid fa-calculator text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight">Agentic Cost Estimator</h1>
+                <p class="text-slate-500 font-medium">Precision tools for the autonomous era.</p>
+            </div>
+
+            <div class="pt-4 space-y-4">
+                <button id="enter-app-btn" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95">
+                    Start Estimating
+                </button>
+
+                <label class="flex items-center justify-center gap-2 cursor-pointer group">
+                    <input type="checkbox" id="skip-splash-checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-xs text-slate-400 group-hover:text-slate-600 transition-colors">Don't show this again</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-7xl mx-auto space-y-6">
         
         <!-- Header -->
@@ -125,7 +184,7 @@
                         <i class="fa-solid fa-calculator text-white text-xl"></i>
                     </div>
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v2.0</span>
+                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v2.2</span>
                     </h1>
                 </div>
                 
@@ -689,15 +748,47 @@
 
                 <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
 
-                    <!-- v2.0 -->
+                    <!-- v2.2 -->
                     <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-bolt text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">Model Suite Updates</div>
+                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v2.2</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Updated reference models to include latest versions such as Claude Haiku 4.5, Sonnet 4.5/4.6/5, Opus 4.5-5, Fable 5, Gemini 2.5/3/3.1/3.5/3.6, GPT-4o mini, GPT-5 series, Grok 4.5, Kimi K2.7 Code, and MAI-Code-1-Flash.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v2.1 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-clapperboard text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">Professional Splash Screen</div>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v2.1</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Introduced a modern, professional splash screen with application branding. Includes a "Don't show this again" option for faster access in subsequent sessions.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v2.0 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
                         <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                             <i class="fa-solid fa-percent text-xs"></i>
                         </div>
                         <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
                             <div class="flex items-center justify-between space-x-2 mb-1">
                                 <div class="font-bold text-slate-800">Prorata Estimation Mode</div>
-                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v2.0</time>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v2.0</time>
                             </div>
                             <div class="text-slate-500 text-xs leading-relaxed">
                                 Introduced a new "Prorata" mode for WBS tokens estimation. Users can now define a Total Scope LOC and allocate percentages to each task, rather than just using fixed quantities.
@@ -2731,8 +2822,33 @@
             });
         }
 
+        function handleSplashScreen() {
+            const splash = document.getElementById('splash-screen');
+            const skipCheckbox = document.getElementById('skip-splash-checkbox');
+            const enterBtn = document.getElementById('enter-app-btn');
+            const SKIP_KEY = 'skip_agentic_splash';
+
+            if (localStorage.getItem(SKIP_KEY) === 'true') {
+                splash.style.display = 'none';
+                return;
+            }
+
+            enterBtn.addEventListener('click', () => {
+                if (skipCheckbox.checked) {
+                    localStorage.setItem(SKIP_KEY, 'true');
+                }
+                splash.classList.add('splash-hidden');
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                }, 500);
+            });
+        }
+
         // Run Application
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', () => {
+            handleSplashScreen();
+            initializeApp();
+        });
     </script>
 </body>
 </html>
