@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic Cost Estimator v2.2</title>
+    <title>Agentic Cost Estimator v2.4</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -184,7 +184,7 @@
                         <i class="fa-solid fa-calculator text-white text-xl"></i>
                     </div>
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v2.3</span>
+                        Agentic Cost Estimator <span class="text-sm font-normal text-slate-400 ml-2">v2.4</span>
                     </h1>
                 </div>
                 
@@ -677,7 +677,7 @@
                         <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-bolt text-emerald-500"></i> Execution Models
                         </h3>
-                        <p class="text-slate-500 text-sm mt-1">Detailed tiering and pricing (per 1M tokens) for the available models.</p>
+                        <p class="text-slate-500 text-sm mt-1">GitHub Copilot rates per 1M tokens: input, cached input, and output. Cache-write charges are excluded from estimates. <a class="text-blue-600 hover:underline" href="https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing" target="_blank" rel="noopener noreferrer">Pricing source</a>.</p>
                     </div>
                     <button id="addModelBtn" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs rounded-lg transition-all shadow-sm shrink-0">
                         <i class="fa-solid fa-plus"></i> Add Model
@@ -748,15 +748,31 @@
 
                 <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
 
-                    <!-- v2.3 -->
+                    <!-- v2.4 -->
                     <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                         <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                             <i class="fa-solid fa-chart-line text-xs"></i>
                         </div>
                         <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
                             <div class="flex items-center justify-between space-x-2 mb-1">
+                                <div class="font-bold text-slate-800">November 2026 Copilot Models & Pricing Update</div>
+                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v2.4</time>
+                            </div>
+                            <div class="text-slate-500 text-xs leading-relaxed">
+                                Synced available models and per-token rates with GitHub Copilot's published pricing. Added current models and removed retired entries. Gemini 4 Carbon rate reflects its promotion through December 1, 2026. Estimates exclude cache-write charges.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v2.3 -->
+                    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-200 group-[.is-active]:bg-blue-600 text-slate-500 group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                            <i class="fa-solid fa-chart-line text-xs"></i>
+                        </div>
+                        <div class="w-[calc(100%-4rem)] md:w-[45%] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                            <div class="flex items-center justify-between space-x-2 mb-1">
                                 <div class="font-bold text-slate-800">October 2026 Model Pricing & Deprecation Update</div>
-                                <time class="font-mono text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">v2.3</time>
+                                <time class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">v2.3</time>
                             </div>
                             <div class="text-slate-500 text-xs leading-relaxed">
                                 Corrected Claude Opus cached token pricing (now matches GitHub official rates). Added newest models: Claude Haiku 5.5, Opus 5/5.5, Sonnet 5/5.5, Fable 5/5.1, GPT-5.6 series, GPT-6 series, Gemini 3.7/3.8/4 Argon, Grok 4.6/4.7, Kimi K3, MAI-Code-1.1-Flash. Updated deprecation status based on current availability.
@@ -972,6 +988,8 @@
 
         // --- APPLICATION STATE ---
         const REPORT_DISCLAIMER = "Estimations are provided as-is, and are used under responsibility of the one who uses it. The responsibility of Air Liquide and its affiliates cannot be engaged.";
+        const MODEL_STORAGE_KEY = 'public_agentic_calculator_models_20261117';
+        const LEGACY_MODEL_STORAGE_KEY = 'public_agentic_calculator_models_20260917';
         const wbsState = {};
         let wbsMode = 'standard'; // 'standard' or 'prorata'
         let prorataTotalLoc = 50000;
@@ -1001,10 +1019,17 @@
                     TASKS.length = 0;
                     TASKS.push(...JSON.parse(savedTasks));
                 }
-                const savedModels = localStorage.getItem('public_agentic_calculator_models_20260917');
+                const savedModels = localStorage.getItem(MODEL_STORAGE_KEY);
                 if (savedModels) {
                     MODELS.length = 0;
                     MODELS.push(...JSON.parse(savedModels));
+                } else {
+                    const legacyModels = localStorage.getItem(LEGACY_MODEL_STORAGE_KEY);
+                    if (legacyModels) {
+                        const customModels = JSON.parse(legacyModels).filter(model => model.id?.startsWith('custom-'));
+                        MODELS.push(...customModels);
+                        localStorage.setItem(MODEL_STORAGE_KEY, JSON.stringify(MODELS));
+                    }
                 }
             } catch (e) {
                 console.error("Error loading referential data from localStorage:", e);
@@ -1015,7 +1040,7 @@
             try {
                 localStorage.setItem('public_agentic_calculator_languages', JSON.stringify(LANGUAGES));
                 localStorage.setItem('public_agentic_calculator_tasks', JSON.stringify(TASKS));
-                localStorage.setItem('public_agentic_calculator_models_20260917', JSON.stringify(MODELS));
+                localStorage.setItem(MODEL_STORAGE_KEY, JSON.stringify(MODELS));
             } catch (e) {
                 console.error("Error saving to localStorage:", e);
             }
@@ -2155,7 +2180,7 @@
                                 // Save to localStorage
                                 localStorage.setItem('public_agentic_calculator_languages', JSON.stringify(importedData.languages));
                                 localStorage.setItem('public_agentic_calculator_tasks', JSON.stringify(importedData.tasks));
-                                localStorage.setItem('public_agentic_calculator_models_20260917', JSON.stringify(importedData.models));
+                                localStorage.setItem(MODEL_STORAGE_KEY, JSON.stringify(importedData.models));
                                 
                                 // Reload page to parse and initialize all state correctly
                                 window.location.reload();
@@ -2249,7 +2274,8 @@
 
                         localStorage.removeItem('public_agentic_calculator_languages');
                         localStorage.removeItem('public_agentic_calculator_tasks');
-                                localStorage.removeItem('public_agentic_calculator_models_20260917');
+                                localStorage.removeItem(MODEL_STORAGE_KEY);
+                                localStorage.removeItem(LEGACY_MODEL_STORAGE_KEY);
                         window.location.reload();
                     }
                 });
