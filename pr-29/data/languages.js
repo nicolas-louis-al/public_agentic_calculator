@@ -1,0 +1,16 @@
+const LANGUAGES = [
+    { id: 'js', name: "JavaScript", density: 7.0 },
+    { id: 'ts', name: "TypeScript / JSX", density: 9.0 },
+    { id: 'py', name: "Python / Godot", density: 10.0 },
+    { id: 'sh', name: "Shell / Scripting", density: 11.5 },
+    { id: 'go', name: "Go / Swift / PHP", density: 11.25 },
+    { id: 'st', name: "Industrial / ST", density: 11.5 },
+    { id: 'sql', name: "SQL / Data", density: 11.5 },
+    { id: 'rs', name: "Rust", density: 12.5 },
+    { id: 'java', name: "Java / C# / Apex", density: 13.25 },
+    { id: 'c', name: "C / C++ / Obj-C", density: 14.25 },
+    { id: 'yaml', name: "YAML / Terraform", density: 11.0 },
+    { id: 'md', name: "Documentation", density: 9.0 },
+    { id: 'json', name: "JSON / Config", density: 15.0 },
+    { id: 'xml', name: "XML / Markup", density: 18.0 },
+].sort((a, b) => a.name.localeCompare(b.name));
